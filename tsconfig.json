@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "target": "es6",
+        "module": "CommonJS",
+        "rootDir": "./src",
+        "outDir": "./build",
+        "esModuleInterop": true,
+        "strict": true,
+        "resolveJsonModule": true
+    }
+}
