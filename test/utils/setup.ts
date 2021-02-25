@@ -1,3 +1,4 @@
+import 'reflect-metadata'
 import { setupDb, teardownDb, closeDb } from './db'
 
 beforeAll(async () => {

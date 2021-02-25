@@ -8,7 +8,7 @@ import util from 'util'
 import config from 'config'
 
 import routes from './routes'
-import RequestError from './models/RequestError'
+import RequestError from '@models/RequestError'
 import { isProduction } from './utils'
 
 console.log(util.inspect(config, { depth: null }))

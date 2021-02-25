@@ -1,10 +1,10 @@
 {
-  "name": "node-skeleton",
+  "name": "fuse-subscription-service",
   "version": "0.1.0",
   "description": "node-skeleton",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon ./src/app.ts",
+    "start": "nodemon ./src/server.ts",
     "debug": "node --inspect-brk --trace-warnings ./src/app.js",
     "start-prod": "NODE_ENV=production ts-node-transpile-only ./src/server.ts",
     "doc": "apidoc -i src -o docs/api && apidoc-markdown -p docs/api -o docs/api.md",
@@ -32,7 +32,8 @@
     "@models": "./src/models",
     "@routes": "./src/routes",
     "@utils": "./src/utils",
-    "@services": "./src/services"
+    "@services": "./src/services",
+    "@controllers": "./src/controllers"
   },
   "license": "MIT",
   "dependencies": {
@@ -59,10 +60,12 @@
     "moment": "^2.23.0",
     "mongoose": "^5.11.17",
     "morgan": "^1.9.1",
+    "redis": "^3.0.2",
     "reflect-metadata": "^0.1.13",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7",
     "ts-node": "^9.1.1",
+    "tsconfig-paths": "^3.9.0",
     "typedi": "^0.10.0",
     "typescript": "^4.1.5",
     "validator": "^10.10.0"
@@ -77,6 +80,7 @@
     "@types/mongoose": "^5.10.3",
     "@types/morgan": "^1.9.2",
     "@types/node": "^14.14.31",
+    "@types/redis": "^2.8.28",
     "@types/sinon": "^9.0.10",
     "@types/supertest": "^2.0.10",
     "@typescript-eslint/eslint-plugin": "^4.15.1",

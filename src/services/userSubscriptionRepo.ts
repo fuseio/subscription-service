@@ -1,11 +1,11 @@
 import { Document } from 'mongoose'
 import { Service } from 'typedi'
-import UserSubscription from '../models/UserSubscription'
-import UserService from './user'
+import UserSubscription from '@models/UserSubscription'
+import UserRepoService from './userRepo'
 
 @Service()
-export default class UserSubscriptionService {
-  constructor (private readonly userService: UserService) {}
+export default class UserSubscriptionRepoService {
+  constructor (private readonly userService: UserRepoService) {}
 
   async createSubscription (eventName: string, webhookUrl: string, user: Document) {
     const hasSubscribed = await this.hasSubscription(eventName, user)

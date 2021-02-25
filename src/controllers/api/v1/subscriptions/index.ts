@@ -1,19 +1,22 @@
 import { Request, Response, NextFunction } from 'express'
 import Container from 'typedi'
-import SubscriptionService from '../../../../services/subscription'
-import { WALLET_TRANSFER_TO_EVENT } from '../../../../constants/events'
-import UserService from '../../../../services/user'
-import UserSubscriptionService from '../../../../services/userSubscription'
-import RequestError from '../../../../models/RequestError'
+import SubscriptionService from '@services/subscription'
+import { SUPPORTED_EVENTS, ERC20_TRANSFER_TO_EVENT } from '@constants/events'
+import UserRepoService from '@services/userRepo'
+import UserSubscriptionRepoService from '@services/userSubscriptionRepo'
+import RequestError from '@models/RequestError'
 import { validationResult } from 'express-validator'
 
 export default class SubscriptionsController {
-  static async subscribeWalletTransfersTo (req: Request, res: Response, next: NextFunction) {
+  static async subscribe (req: Request, res: Response, next: NextFunction) {
     try {
-      const {
-        address,
-        webhookUrl
-      } = req.body
+      const { eventName } = req.params
+      const { address, webhookUrl } = req.body
+
+      if (!SUPPORTED_EVENTS.includes(eventName)) {
+        res.status(400).json({ message: 'Unsupported event' })
+        return
+      }
 
       const errors = validationResult(req)
       if (!errors.isEmpty()) {
@@ -21,17 +24,17 @@ export default class SubscriptionsController {
         return
       }
 
-      const userService = Container.get(UserService)
-      const userSubscriptionService = Container.get(UserSubscriptionService)
-      const subscriptionService = Container.get(SubscriptionService)
+      const userRepo = Container.get(UserRepoService)
+      const userSubscriptionRepo = Container.get(UserSubscriptionRepoService)
+      const subscription = Container.get(SubscriptionService)
 
-      let user = await userService.getUser(address)
+      let user = await userRepo.getUser(address)
       if (!user) {
-        user = await userService.createUser(address)
+        user = await userRepo.createUser(address)
       }
 
-      const hasSubscription = await userSubscriptionService.hasSubscription(
-        WALLET_TRANSFER_TO_EVENT,
+      const hasSubscription = await userSubscriptionRepo.hasSubscription(
+        eventName,
         user
       )
 
@@ -39,14 +42,14 @@ export default class SubscriptionsController {
         throw new RequestError(400, 'User already subscribed')
       }
 
-      await userSubscriptionService.createSubscription(
-        WALLET_TRANSFER_TO_EVENT,
+      await userSubscriptionRepo.createSubscription(
+        eventName,
         webhookUrl,
         user
       )
 
-      subscriptionService.subscribe(
-        WALLET_TRANSFER_TO_EVENT,
+      subscription.subscribe(
+        eventName,
         address
       )
 
@@ -56,28 +59,32 @@ export default class SubscriptionsController {
     }
   }
 
-  static async unsubscribeWalletTransferTo (req: Request, res: Response, next: NextFunction) {
+  static async unsubscribe (req: Request, res: Response, next: NextFunction) {
     try {
-      const {
-        address
-      } = req.body
+      const { eventName } = req.params
+      const { address } = req.body
 
-      const userService = Container.get(UserService)
-      const userSubscriptionService = Container.get(UserSubscriptionService)
-      const subscriptionService = Container.get(SubscriptionService)
+      if (!SUPPORTED_EVENTS.includes(eventName)) {
+        res.status(400).json({ message: 'Unsupported event' })
+        return
+      }
 
-      const user = await userService.getUser(address)
+      const userRepo = Container.get(UserRepoService)
+      const userSubscriptionRepo = Container.get(UserSubscriptionRepoService)
+      const subscription = Container.get(SubscriptionService)
+
+      const user = await userRepo.getUser(address)
       if (!user) {
         throw new RequestError(400, 'User not found')
       }
 
-      await userSubscriptionService.removeSubscription(
-        WALLET_TRANSFER_TO_EVENT,
+      await userSubscriptionRepo.removeSubscription(
+        ERC20_TRANSFER_TO_EVENT,
         user
       )
 
-      subscriptionService.unsubscribe(
-        WALLET_TRANSFER_TO_EVENT,
+      subscription.unsubscribe(
+        ERC20_TRANSFER_TO_EVENT,
         address
       )
 

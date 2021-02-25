@@ -1,10 +1,10 @@
 import { body } from 'express-validator'
 
-export const subscribeWalletTransfersToValidation = [
+export const subscribeValidation = [
   body('address').exists().isString().isEthereumAddress(),
   body('webhookUrl').exists().isString()
 ]
 
-export const unsubscribeWalletTransfersToValidation = [
+export const unsubscribeValidation = [
   body('address').exists().isString().isEthereumAddress()
 ]

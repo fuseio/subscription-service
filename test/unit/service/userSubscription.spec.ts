@@ -1,12 +1,12 @@
-import UserService from '../../../src/services/user'
-import UserSubscriptionService from '../../../src/services/userSubscription'
 import '../../utils/setup'
+import UserRepoService from '../../../src/services/userRepo'
+import UserSubscriptionRepoService from '../../../src/services/userSubscriptionRepo'
 
-describe('UserSubscriptionService', () => {
+describe('UserSubscriptionRepoService', () => {
   describe('createSubsription', () => {
     test('should create subscription', async () => {
-      const userService = new UserService()
-      const service = new UserSubscriptionService(userService)
+      const userService = new UserRepoService()
+      const service = new UserSubscriptionRepoService(userService)
       const eventName = 'event'
       const webhookUrl = 'http://xyz.com'
 
@@ -19,8 +19,8 @@ describe('UserSubscriptionService', () => {
     })
 
     test('when already subscribed should not create subscription', async () => {
-      const userService = new UserService()
-      const service = new UserSubscriptionService(userService)
+      const userService = new UserRepoService()
+      const service = new UserSubscriptionRepoService(userService)
       const eventName = 'event'
       const webhookUrl = 'http://xyz.com'
 
@@ -35,8 +35,8 @@ describe('UserSubscriptionService', () => {
 
   describe('hasSubscription', () => {
     test('if subscribed should return true', async () => {
-      const userService = new UserService()
-      const service = new UserSubscriptionService(userService)
+      const userService = new UserRepoService()
+      const service = new UserSubscriptionRepoService(userService)
       const eventName = 'event'
       const webhookUrl = 'http://xyz.com'
 
@@ -47,8 +47,8 @@ describe('UserSubscriptionService', () => {
     })
 
     test('if not subscribed should return false', async () => {
-      const userService = new UserService()
-      const service = new UserSubscriptionService(userService)
+      const userService = new UserRepoService()
+      const service = new UserSubscriptionRepoService(userService)
       const eventName = 'event'
 
       const user = await userService.createUser('0x5670d7076E7b3604ceb07c003ff0920490756587')
@@ -59,8 +59,8 @@ describe('UserSubscriptionService', () => {
 
   describe('removeSubscription', () => {
     test('given eventName, user should remove subscription if subscribed', async () => {
-      const userService = new UserService()
-      const service = new UserSubscriptionService(userService)
+      const userService = new UserRepoService()
+      const service = new UserSubscriptionRepoService(userService)
       const eventName = 'event'
       const webhookUrl = 'http://xyz.com'
 
@@ -73,8 +73,8 @@ describe('UserSubscriptionService', () => {
     })
 
     test('given eventName, user should not error if not subscribed ', async () => {
-      const userService = new UserService()
-      const service = new UserSubscriptionService(userService)
+      const userService = new UserRepoService()
+      const service = new UserSubscriptionRepoService(userService)
       const eventName = 'event'
 
       const user = await userService.createUser('0x5670d7076E7b3604ceb07c003ff0920490756587')
@@ -85,8 +85,8 @@ describe('UserSubscriptionService', () => {
 
   describe('getSubscriptions', () => {
     test('should return all subscriptions', async () => {
-      const userService = new UserService()
-      const service = new UserSubscriptionService(userService)
+      const userService = new UserRepoService()
+      const service = new UserSubscriptionRepoService(userService)
       const eventName = 'event'
       const eventName2 = 'event2'
       const eventName3 = 'event3'
@@ -105,8 +105,8 @@ describe('UserSubscriptionService', () => {
 
   describe('getSubscription', () => {
     test('if subscription should return subscription', async () => {
-      const userService = new UserService()
-      const service = new UserSubscriptionService(userService)
+      const userService = new UserRepoService()
+      const service = new UserSubscriptionRepoService(userService)
       const eventName = 'event'
       const webhookUrl = 'http://xyz.com'
 

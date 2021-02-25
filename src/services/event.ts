@@ -2,13 +2,18 @@ import EventEmitter from 'events'
 import { Service } from 'typedi'
 import { Interface } from '@ethersproject/abi'
 import ProviderService from './provider'
-import ERC20_ABI from '../constants/abi/erc20.json'
-import { ERC20_TRANSFER_EVENT_HASH, WALLET_TRANSFER_TO_EVENT } from '../constants/events'
+import ERC20_ABI from '@constants/abi/erc20.json'
+import { ERC20_TRANSFER_EVENT_HASH, ERC20_TRANSFER_TO_EVENT } from '@constants/events'
 import SubscriptionService from './subscription'
-import UserSubscriptionService from './userSubscription'
+import UserSubscriptionRepoService from './userSubscriptionRepo'
 import axios from 'axios'
 
-interface Log { topics: Array<string>, data: string}
+interface Log {
+  topics: Array<string>;
+  data: string;
+  address: string;
+  transactionHash: string;
+}
 
 @Service()
 export default class EventService {
@@ -17,7 +22,7 @@ export default class EventService {
     constructor (
       private readonly providerService: ProviderService,
       private readonly subscriptionService: SubscriptionService,
-      private readonly userSubscriptionService: UserSubscriptionService) {
+      private readonly userSubscriptionService: UserSubscriptionRepoService) {
       this.eventManager = new EventEmitter()
     }
 
@@ -26,17 +31,30 @@ export default class EventService {
     }
 
     addEvents () {
-      this.addWalletTransferToEvent()
+      this.addErc20TransferToEvent()
     }
 
-    addWalletTransferToEvent () {
-      const handler = (log: Log) => {
+    addErc20TransferToEvent () {
+      const handler = async (log: Log) => {
         const erc20Interface = new Interface(ERC20_ABI)
         const data = erc20Interface.parseLog(log)
         const { args: [, to] } = data
 
-        if (this.subscriptionService.isSubscribed(WALLET_TRANSFER_TO_EVENT, to)) {
-          this.eventManager.emit(WALLET_TRANSFER_TO_EVENT, data, to)
+        const result = {
+          address: log?.address,
+          transactionHash: log?.transactionHash,
+          name: data?.name,
+          signature: data?.signature,
+          topic: data?.topic,
+          args: data?.args
+        }
+
+        const isSubscribed = await this.subscriptionService.isSubscribed(
+          ERC20_TRANSFER_TO_EVENT, to
+        )
+
+        if (isSubscribed) {
+          this.eventManager.emit(ERC20_TRANSFER_TO_EVENT, result, to)
         }
       }
 
@@ -44,20 +62,21 @@ export default class EventService {
     }
 
     addHandlers () {
-      this.addWalletTransferToHandler()
+      this.addErc20TransferToHandler()
     }
 
-    addWalletTransferToHandler () {
-      this.eventManager.on(WALLET_TRANSFER_TO_EVENT, async (data, to) => {
+    addErc20TransferToHandler () {
+      this.eventManager.on(ERC20_TRANSFER_TO_EVENT, async (data, to) => {
         try {
           const subscription: any = await this.userSubscriptionService
             .getSubscription(
-              WALLET_TRANSFER_TO_EVENT,
+              ERC20_TRANSFER_TO_EVENT,
               to
             )
 
           if (subscription && subscription.webhookUrl) {
-            await axios.post(subscription.webhookUrl, data)
+            console.log(data)
+            axios.post(subscription.webhookUrl, data)
           }
         } catch (e) {
           console.error(e)
