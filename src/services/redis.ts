@@ -1,5 +1,6 @@
 import redis, { RedisClient } from 'redis'
 import { Service } from 'typedi'
+import { promisify } from 'util'
 
 @Service()
 export default class RedisService {
@@ -10,29 +11,23 @@ export default class RedisService {
     }
 
     async set (key: string, value: string) {
-      return new Promise<void>((resolve) => {
-        this.client.set(key, value, () => {
-          resolve()
-        })
-      })
+      const set = this.promisifyBind(this.client.set)
+      await set(key, value)
     }
 
     async get (key: string) {
-      return new Promise<string|null>((resolve, reject) => {
-        this.client.get(key, (err, value) => {
-          if (err) {
-            reject(err)
-          }
-          resolve(value)
-        })
-      })
+      const get = this.promisifyBind(this.client.get)
+      const value = await get(key)
+      return value
     }
 
     async disconnect () {
-      await new Promise<void>((resolve) => {
-        this.client.quit(() => {
-          resolve()
-        })
-      })
+      const quit = this.promisifyBind(this.client.quit)
+      await quit()
+    }
+
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    promisifyBind (fn: Function): Function {
+      return promisify(fn).bind(this.client)
     }
 }

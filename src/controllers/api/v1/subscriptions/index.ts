@@ -48,7 +48,7 @@ export default class SubscriptionsController {
         user
       )
 
-      subscription.subscribe(
+      await subscription.subscribe(
         eventName,
         address
       )
@@ -69,6 +69,12 @@ export default class SubscriptionsController {
         return
       }
 
+      const errors = validationResult(req)
+      if (!errors.isEmpty()) {
+        res.status(400).json({ error: errors.mapped() })
+        return
+      }
+
       const userRepo = Container.get(UserRepoService)
       const userSubscriptionRepo = Container.get(UserSubscriptionRepoService)
       const subscription = Container.get(SubscriptionService)
@@ -83,7 +89,7 @@ export default class SubscriptionsController {
         user
       )
 
-      subscription.unsubscribe(
+      await subscription.unsubscribe(
         ERC20_TRANSFER_TO_EVENT,
         address
       )

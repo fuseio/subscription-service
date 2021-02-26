@@ -6,4 +6,4 @@ export const ERC20_TRANSFER_EVENT = 'Transfer(address,address,uint256)'
 
 export const ERC20_TRANSFER_EVENT_HASH = id(ERC20_TRANSFER_EVENT)
 
-export const SUPPORTED_EVENTS = 'erc20-transfers-to'
+export const SUPPORTED_EVENTS = [ERC20_TRANSFER_TO_EVENT]

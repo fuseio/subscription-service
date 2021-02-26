@@ -5,7 +5,18 @@ import { promisify } from 'util'
 describe('SubscriptionService', () => {
     let redisService: RedisService
 
-    beforeEach(() => {
+    // https://stackoverflow.com/a/54560610
+    async function shutdown() {
+        await new Promise<void>((resolve) => {
+            redisService.client.quit(() => {
+                resolve();
+            });
+        });
+        
+        await new Promise(resolve => setImmediate(resolve));
+    }
+
+    beforeAll(() => {
         redisService = new RedisService()
     })
 
@@ -15,8 +26,8 @@ describe('SubscriptionService', () => {
         await flush()
     })
 
-    afterAll(() => {
-        redisService.client.end(true)    
+    afterAll(async () => {
+        await shutdown()
     })
 
     describe('subscribe', () => {
