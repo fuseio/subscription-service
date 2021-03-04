@@ -5,7 +5,6 @@ import ProviderService from './provider'
 import ERC20_ABI from '@constants/abi/erc20.json'
 import { ERC20_TRANSFER_EVENT_HASH, ERC20_TRANSFER_TO_EVENT } from '@constants/events'
 import SubscriptionService from './subscription'
-import UserSubscriptionRepoService from './userSubscriptionRepo'
 import axios from 'axios'
 
 interface Log {
@@ -21,8 +20,7 @@ export default class EventService {
 
     constructor (
       private readonly providerService: ProviderService,
-      private readonly subscriptionService: SubscriptionService,
-      private readonly userSubscriptionService: UserSubscriptionRepoService) {
+      private readonly subscriptionService: SubscriptionService) {
       this.eventManager = new EventEmitter()
     }
 
@@ -49,9 +47,8 @@ export default class EventService {
           args: data?.args
         }
 
-        const isSubscribed = await this.subscriptionService.isSubscribed(
-          ERC20_TRANSFER_TO_EVENT, to
-        )
+        const isSubscribed = await this.subscriptionService
+          .isSubscribed(ERC20_TRANSFER_TO_EVENT, to)
 
         if (isSubscribed) {
           this.eventManager.emit(ERC20_TRANSFER_TO_EVENT, result, to)
@@ -68,14 +65,10 @@ export default class EventService {
     addErc20TransferToHandler () {
       this.eventManager.on(ERC20_TRANSFER_TO_EVENT, async (data, to) => {
         try {
-          const subscription: any = await this.userSubscriptionService
-            .getSubscription(
-              ERC20_TRANSFER_TO_EVENT,
-              to
-            )
+          const subscription = await this.subscriptionService
+            .getSubscription(ERC20_TRANSFER_TO_EVENT, to)
 
           if (subscription && subscription.webhookUrl) {
-            console.log(data)
             axios.post(subscription.webhookUrl, data)
           }
         } catch (e) {

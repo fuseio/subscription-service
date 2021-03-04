@@ -1,151 +1,96 @@
+import '../../utils/setup'
 import SubscriptionService from '../../../src/services/subscription'
-import RedisService from '../../../src/services/redis'
-import { promisify } from 'util'
+import UserService from '../../../src/services/user'
 
 describe('SubscriptionService', () => {
-    let redisService: RedisService
+    let userService: UserService
+    let service: SubscriptionService
 
-    // https://stackoverflow.com/a/54560610
-    async function shutdown() {
-        await new Promise<void>((resolve) => {
-            redisService.client.quit(() => {
-                resolve();
-            });
-        });
-        
-        await new Promise(resolve => setImmediate(resolve));
-    }
+    beforeEach((done) => {
+        userService = new UserService()
+        service = new SubscriptionService(userService)
 
-    beforeAll(() => {
-        redisService = new RedisService()
-    })
-
-    afterEach(async () => {
-        const flush = promisify(redisService.client.flushdb)
-            .bind(redisService.client)
-        await flush()
-    })
-
-    afterAll(async () => {
-        await shutdown()
+        service.client.flushdb(done)
     })
 
     describe('subscribe', () => {
-        test('should add subscription', async () => {
-            const service = new SubscriptionService(redisService)
-            const eventName = 'event.action'
-            const user = '0x0'
+        test('should subcribe given address to event', async () => {
+           const service = new SubscriptionService(userService)
 
-            await service.subscribe(eventName, user)
-
-            expect(await redisService.get(user)).toEqual("[\"event.action\"]")
-        })
-
-        test('should handle multiple subscriptions', async () => {
-            const service = new SubscriptionService(redisService)
-            const eventName = 'event.action'
-            const eventName2 = 'event.action2'
-            const eventName3 = 'event.action3'
-            const user = '0x0'
-
-            await service.subscribe(eventName, user)
-            await service.subscribe(eventName2, user)
-            await service.subscribe(eventName3, user)
-
-            expect(
-                await redisService.get(user)
-            ).toEqual("[\"event.action\",\"event.action2\",\"event.action3\"]")
-        })
-
-        test('should handle multiple users with multiple subscriptions', async () => {
-            const service = new SubscriptionService(redisService)
-            const eventName = 'event.action'
-            const eventName2 = 'event.action2'
-            const eventName3 = 'event.action3'
-            const user = '0x0'
-            const user2 = '0x1'
-
-            await service.subscribe(eventName3, user)
-            await service.subscribe(eventName, user)
-            await service.subscribe(eventName2, user)
-
-            await service.subscribe(eventName, user2)
-            await service.subscribe(eventName3, user2)
-            await service.subscribe(eventName2, user2)
-
-            expect(
-                await redisService.get(user)
-            ).toEqual("[\"event.action3\",\"event.action\",\"event.action2\"]")
-            
-            expect(
-                await redisService.get(user2)
-            ).toEqual("[\"event.action\",\"event.action3\",\"event.action2\"]")
-        })
-
-        test('should handle empty subscriptions array', async () => {
-            const service = new SubscriptionService(redisService)
-            const eventName = 'event.action'
-            const user = '0x0'
-
-            await service.subscribe(eventName, user)
-            await service.unsubscribe(eventName, user)
-            await service.subscribe(eventName, user)
-
-            expect(await redisService.get(user)).toEqual("[\"event.action\"]")
+           const user = await userService.createUser('0x0')
+           const eventName = 'event'
+           const webhookUrl = 'http://xyz.com/webhooks'
+           
+           const subscription = await service.subscribe(user, eventName, webhookUrl)
+           
+           expect(subscription?.user).toBe(user)
+           expect(subscription?.eventName).toBe(eventName)
+           expect(subscription?.webhookUrl).toBe(webhookUrl)
         })
     })
 
     describe('unsubscribe', () => {
-        test('should remove subscription', async () => {
-            const service = new SubscriptionService(redisService)
-            const eventName = 'event.action'
-            const user = '0x0'
+        test('should unsubcribe given address from event', async () => {
+            const service = new SubscriptionService(userService)
+            
+            const user = await userService.createUser('0x0')
+            const eventName = 'event'
+            const webhookUrl = 'http://xyz.com/webhooks'
 
-            await service.subscribe(eventName, user)
+            await service.subscribe(user, eventName, webhookUrl)
 
-            await service.unsubscribe(eventName, user)
+            await service.unsubscribe(user, eventName)
 
-            expect(
-                await redisService.get(user)
-            ).toEqual("[]")
-        })
+            const subscription = await service.getSubscription(eventName, user.address)
 
-        test('should remove subscription from multiple subscriptions', async () => {
-            const service = new SubscriptionService(redisService)
-            const eventName = 'event.action'
-            const eventName2 = 'event.action2'
-            const eventName3 = 'event.action3'
-            const user = '0x0'
-
-            await service.subscribe(eventName, user)
-            await service.subscribe(eventName2, user)
-            await service.subscribe(eventName3, user)
-
-            await service.unsubscribe(eventName2, user)
-
-            expect(
-                await redisService.get(user)
-            ).toEqual("[\"event.action\",\"event.action3\"]")
+            expect(subscription).toBeNull()
         })
     })
 
     describe('isSubscribed', () => {
-        test('should return true if subscribed', async () => {
-            const service = new SubscriptionService(redisService)
-            const eventName = 'event.action'
-            const user = '0x0'
+        test('should return true if address is subscribed to event', async () => {
+            const service = new SubscriptionService(userService)
+            
+            const user = await userService.createUser('0x0')
+            const eventName = 'event'
+            const webhookUrl = 'http://xyz.com/webhooks'
 
-            await service.subscribe(eventName, user)
+            await service.subscribe(user, eventName, webhookUrl)
 
-            expect(await service.isSubscribed(eventName, user)).toBeTruthy()
+            expect(
+                await service.isSubscribed(eventName, user.address)
+            ).toBe(true)
         })
 
-        test('should return false if not subscribed', async () => {
-            const service = new SubscriptionService(redisService)
-            const eventName = 'event.action'
-            const user = '0x0'
+        test('should return false if address is not subscribed to event', async () => {
+            const service = new SubscriptionService(userService)
+            
+            const user = await userService.createUser('0x0')
+            const eventName = 'event'
+            
+            expect(
+                await service.isSubscribed(eventName, user.address)
+            ).toBe(false)
+        })
+    })
 
-            expect(await service.isSubscribed(eventName, user)).toBeFalsy()
+    describe('getSubscription', () => {
+        test('should return subscription if subscribed', async () => {
+            const service = new SubscriptionService(userService)
+            
+            const user = await userService.createUser('0x0')
+            const eventName = 'event'
+            const webhookUrl = 'http://xyz.com/webhooks'
+
+            await service.subscribe(user, eventName, webhookUrl)
+
+            const subscription = await service.getSubscription(
+                eventName, 
+                user.address
+            )
+
+            expect(subscription?.webhookUrl).toBe(webhookUrl)
+            expect(subscription?.user).toStrictEqual(user._id)
         })
     })
 })

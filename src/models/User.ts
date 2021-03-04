@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose'
+import mongoose, { Schema, Document } from 'mongoose'
 
 const userSchema = new Schema({
   address: {
@@ -11,4 +11,9 @@ const userSchema = new Schema({
   }]
 })
 
-export default mongoose.model('User', userSchema)
+export interface UserDoc extends Document {
+  address: string;
+  subscriptions: Array<string>;
+}
+
+export default mongoose.model<UserDoc>('User', userSchema)

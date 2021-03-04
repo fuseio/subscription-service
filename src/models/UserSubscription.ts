@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose'
+import mongoose, { Schema, Document } from 'mongoose'
 
 const userSubscriptionSchema = new Schema({
   eventName: {
@@ -15,4 +15,13 @@ const userSubscriptionSchema = new Schema({
   }
 })
 
-export default mongoose.model('UserSubscription', userSubscriptionSchema)
+export interface UserSubscriptionDoc extends Document {
+  eventName: string;
+  webhookUrl: string;
+  user: any;
+}
+
+export default mongoose.model<UserSubscriptionDoc>(
+  'UserSubscription',
+  userSubscriptionSchema
+)

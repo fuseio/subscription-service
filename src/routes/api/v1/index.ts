@@ -1,21 +1,21 @@
 import { Router } from 'express'
 import SubscriptionsController from '@controllers/api/v1/subscriptions'
 import {
-  subscribeValidation,
-  unsubscribeValidation
+  unsubscribeValidationHandler,
+  subscribeValidationHandler
 } from '@controllers/api/v1/subscriptions/validations'
 
 const router = Router()
 
 router.post(
   '/subscribe/:eventName',
-  subscribeValidation,
+  subscribeValidationHandler,
   SubscriptionsController.subscribe
 )
 
 router.post(
   '/unsubscribe/:eventName',
-  unsubscribeValidation,
+  unsubscribeValidationHandler,
   SubscriptionsController.unsubscribe
 )
 

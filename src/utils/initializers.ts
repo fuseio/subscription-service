@@ -2,8 +2,6 @@ import config from 'config'
 import Container from 'typedi'
 import mongoose from 'mongoose'
 import EventService from '@services/event'
-import SubscriptionService from '@services/subscription'
-import UserSubscriptionRepoService from '@services/userSubscriptionRepo'
 
 export const initDb = () => {
   mongoose.set('debug', config.get('mongo.debug'))
@@ -18,15 +16,6 @@ export const initDb = () => {
 
 export const initServices = async () => {
   const eventService = Container.get(EventService)
-  const userSubscriptionService = Container.get(UserSubscriptionRepoService)
-  const subscriptionService = Container.get(SubscriptionService)
-
-  const subs: any = await userSubscriptionService.getSubscriptions()
-  for (const sub of subs) {
-    if (sub.eventName && sub.user && sub.user.address) {
-      subscriptionService.subscribe(sub.eventName, sub.user.address)
-    }
-  }
 
   eventService.addHandlers()
   eventService.addEvents()

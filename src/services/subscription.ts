@@ -1,55 +1,79 @@
+import redis, { RedisClient } from 'redis'
 import { Service } from 'typedi'
-import RedisService from './redis'
+import UserService from '@services/user'
+import userSubscription from '@models/UserSubscription'
+import { UserDoc } from '@models/User'
+import { promisify } from 'util'
 
 @Service()
 export default class SubscriptionService {
-  constructor (private readonly redisService: RedisService) {}
+  client: RedisClient
 
-  async subscribe (eventName: string, user: string) {
-    await this.addSubscription(eventName, user)
+  constructor (readonly userService: UserService) {
+    this.client = redis.createClient()
   }
 
-  async unsubscribe (eventName: string, user: string) {
-    await this.removeSubscription(eventName, user)
+  async subscribe (user: UserDoc, eventName: string, webhookUrl: string) {
+    const key = this.buildKey(user.address, eventName)
+
+    await this.redisSet(key, eventName)
+    const subscription = await userSubscription.create({
+      eventName,
+      webhookUrl,
+      user
+    })
+
+    return subscription
   }
 
-  async isSubscribed (eventName: string, user: string) {
-    const subsStr = await this.redisService.get(user)
+  async unsubscribe (user: UserDoc, eventName: string) {
+    const key = this.buildKey(user.address, eventName)
 
-    if (subsStr) {
-      const subs = JSON.parse(subsStr)
-      return subs ? subs.includes(eventName) : false
+    await this.redisDel(key)
+    await userSubscription.deleteOne({
+      eventName,
+      user
+    })
+  }
+
+  async isSubscribed (eventName: string, address: string) {
+    const key = this.buildKey(address, eventName)
+
+    const value = await this.redisGet(key)
+    return !!value
+  }
+
+  async getSubscription (eventName: string, address: string) {
+    const user = await this.userService.getUser(address)
+    if (user) {
+      const subscription = await userSubscription.findOne({
+        eventName,
+        user
+      })
+      return subscription
     }
-    return false
   }
 
-  private async addSubscription (eventName: string, user: string) {
-    const subsStr = await this.redisService.get(user)
-
-    if (subsStr) {
-      const subs = JSON.parse(subsStr)
-
-      if (!subs.includes(eventName)) {
-        await this.redisService.set(
-          user,
-          JSON.stringify([...subs, eventName])
-        )
-      }
-    } else {
-      await this.redisService.set(user, JSON.stringify([eventName]))
-    }
+  private buildKey (address: string, eventName: string) {
+    return `${address}_${eventName}`
   }
 
-  private async removeSubscription (eventName: string, user: string) {
-    const subsStr = await this.redisService.get(user)
+  private async redisGet (key: string) {
+    const get = promisify(this.client.get)
+      .bind(this.client)
+    const value = await get(key)
+    return value
+  }
 
-    if (subsStr) {
-      const subs = JSON.parse(subsStr)
+  private async redisSet (key: string, value: string) {
+    const set = promisify(this.client.set)
+      .bind(this.client)
+    await set(key, value)
+  }
 
-      if (subs && subs.includes(eventName)) {
-        const newSub = subs.filter((sub: string) => sub !== eventName)
-        await this.redisService.set(user, JSON.stringify(newSub))
-      }
-    }
+  private async redisDel (key: string) {
+    const del: (key: string | string[]) => Promise<number> =
+      promisify(this.client.del).bind(this.client)
+    await del(key)
   }
 }
