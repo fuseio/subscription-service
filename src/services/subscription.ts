@@ -4,13 +4,14 @@ import UserService from '@services/user'
 import userSubscription from '@models/UserSubscription'
 import { UserDoc } from '@models/User'
 import { promisify } from 'util'
+import config from 'config'
 
 @Service()
 export default class SubscriptionService {
   client: RedisClient
 
   constructor (readonly userService: UserService) {
-    this.client = redis.createClient()
+    this.client = redis.createClient(config.get('redis'))
   }
 
   async subscribe (user: UserDoc, eventName: string, webhookUrl: string) {
