@@ -9,6 +9,7 @@ module.exports = {
     debug: true,
     uri: 'mongodb://localhost/test'
   },
+  redis: {},
   mail: {
     sendgrid: {
       templates: {}

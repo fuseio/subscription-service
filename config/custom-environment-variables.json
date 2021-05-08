@@ -17,6 +17,9 @@
     "uri": "COMMUNITY_MONGO_URI",
     "debug": "COMMUNITY_MONGO_DEBUG"
   },
+  "redis": {
+    "url": "COMMUNITY_REDIS_URL"
+  },
   "secrets": {
     "accounts": {
       "seed": "COMMUNITY_SECRETS_ACCOUNTS_SEED"
