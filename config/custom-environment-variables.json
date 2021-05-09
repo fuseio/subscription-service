@@ -1,28 +1,28 @@
 {
   "api": {
-    "allowCors": "COMMUNITY_API_ALLOW_CORS",
-    "secret": "COMMUNITY_API_SECRET",
-    "tokenExpiresIn": "COMMUNITY_TOKEN_EXPIRES_IN",
+    "allowCors": "FUSE_SUBSCRIPTION_API_ALLOW_CORS",
+    "secret": "FUSE_SUBSCRIPTION_API_SECRET",
+    "tokenExpiresIn": "FUSE_SUBSCRIPTION_TOKEN_EXPIRES_IN",
     "port": "PORT"
   },
   "aws": {
     "secrets": {
-      "secretId": "COMMUNITY_AWS_SECRET_ID",
+      "secretId": "FUSE_SUBSCRIPTION_AWS_SECRET_ID",
        "manager": {
-        "region": "COMMUNITY_AWS_SECRET_MANAGER_REGION"
+        "region": "FUSE_SUBSCRIPTION_AWS_SECRET_MANAGER_REGION"
       }
     }
   },
   "mongo": {
-    "uri": "COMMUNITY_MONGO_URI",
-    "debug": "COMMUNITY_MONGO_DEBUG"
+    "uri": "FUSE_SUBSCRIPTION_MONGO_URI",
+    "debug": "FUSE_SUBSCRIPTION_MONGO_DEBUG"
   },
   "redis": {
-    "url": "COMMUNITY_REDIS_URL"
+    "url": "FUSE_SUBSCRIPTION_REDIS_URL"
   },
   "secrets": {
     "accounts": {
-      "seed": "COMMUNITY_SECRETS_ACCOUNTS_SEED"
+      "seed": "FUSE_SUBSCRIPTION_SECRETS_ACCOUNTS_SEED"
     }
   }
 }
