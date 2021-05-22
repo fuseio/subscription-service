@@ -5,7 +5,7 @@ import ProviderService from './provider'
 import ERC20_ABI from '@constants/abi/erc20.json'
 import { ERC20_TRANSFER_EVENT_HASH, ERC20_TRANSFER_TO_EVENT } from '@constants/events'
 import SubscriptionService from './subscription'
-import axios from 'axios'
+import { signJwt, createHttpClientWithJwt } from '@utils/index'
 
 interface Log {
   topics: Array<string>;
@@ -69,7 +69,11 @@ export default class EventService {
             .getSubscription(ERC20_TRANSFER_TO_EVENT, to)
 
           if (subscription && subscription.webhookUrl) {
-            axios.post(subscription.webhookUrl, data)
+            const payload = { sub: 'subscription', isService: true }
+            const jwt = signJwt(payload)
+            const httpClient = createHttpClientWithJwt(jwt)
+
+            httpClient.post(subscription.webhookUrl, data)
           }
         } catch (e) {
           console.error(e)
