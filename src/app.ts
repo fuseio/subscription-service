@@ -29,29 +29,18 @@ app.use(function (req: Request, res: Response, next: NextFunction) {
 })
 
 /// error handlers
-if (!isProduction) {
-  app.use(function (err: RequestError, req: Request, res: Response) {
-    console.log(err.stack)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use(function (err: RequestError, req: Request, res: Response, next: NextFunction) {
+  if (!isProduction) console.log(err.stack)
 
-    res.status(err.status || 500)
+  res.status(err.status || 500)
 
-    res.json({
-      errors: {
-        message: err.message,
-        error: err
-      }
-    })
+  res.json({
+    errors: {
+      message: err.message,
+      error: err
+    }
   })
-} else {
-  app.use(function (err: RequestError, req: Request, res: Response) {
-    res.status(err.status || 500)
-    res.json({
-      errors: {
-        message: err.message,
-        error: {}
-      }
-    })
-  })
-}
+})
 
 export default app
