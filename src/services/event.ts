@@ -69,10 +69,10 @@ export default class EventService {
             .getSubscription(ERC20_TRANSFER_TO_EVENT, to)
 
           if (subscription && subscription.webhookUrl) {
-            axios.post(subscription.webhookUrl, data)
+            await axios.post(subscription.webhookUrl, data)
           }
         } catch (e) {
-          console.error(e)
+          console.error('Failed to send data to webhookUrl')
         }
       })
     }
