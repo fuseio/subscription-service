@@ -15,5 +15,9 @@ module.exports = {
       templates: {}
     }
   },
-  rpcUrl: 'https://rpc.fuse.io'
+  rpcUrl: 'https://rpc.fuse.io',
+  studio: {
+    baseUrl: 'https://studio.fuse.io',
+    jwt: ''
+  }
 }
