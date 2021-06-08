@@ -1,11 +1,13 @@
 import EventEmitter from 'events'
 import { Service } from 'typedi'
 import { Interface } from '@ethersproject/abi'
+import Axios, { AxiosRequestConfig } from 'axios'
+import config from 'config'
 import ProviderService from './provider'
 import ERC20_ABI from '@constants/abi/erc20.json'
 import { ERC20_TRANSFER_EVENT_HASH, ERC20_TRANSFER_TO_EVENT } from '@constants/events'
 import SubscriptionService from './subscription'
-import axios from 'axios'
+import { isStudioUrl } from '@utils/index'
 
 interface Log {
   topics: Array<string>;
@@ -64,15 +66,27 @@ export default class EventService {
 
     addErc20TransferToHandler () {
       this.eventManager.on(ERC20_TRANSFER_TO_EVENT, async (data, to) => {
+        let webhookUrl
+
         try {
           const subscription = await this.subscriptionService
             .getSubscription(ERC20_TRANSFER_TO_EVENT, to)
+          webhookUrl = subscription?.webhookUrl
 
-          if (subscription && subscription.webhookUrl) {
-            axios.post(subscription.webhookUrl, data)
+          if (subscription?.webhookUrl) {
+            const requestConfig: AxiosRequestConfig = {}
+
+            if (isStudioUrl(subscription.webhookUrl)) {
+              const jwt: string = config.get('studio.jwt')
+              requestConfig.headers = {
+                Authorization: `Bearer ${jwt}`
+              }
+            }
+
+            await Axios.post(subscription.webhookUrl, data, requestConfig)
           }
         } catch (e) {
-          console.error(e)
+          console.error(`Failed to send data to webhookUrl: ${webhookUrl}`)
         }
       })
     }

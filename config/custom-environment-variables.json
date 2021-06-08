@@ -24,5 +24,9 @@
     "accounts": {
       "seed": "FUSE_SUBSCRIPTION_SECRETS_ACCOUNTS_SEED"
     }
+  },
+  "studio": {
+    "baseUrl": "FUSE_STUDIO_BASE_URL",
+    "jwt": "FUSE_STUDIO_JWT"
   }
 }
