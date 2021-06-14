@@ -73,6 +73,8 @@ export default class EventService {
             .getSubscription(ERC20_TRANSFER_TO_EVENT, to)
           webhookUrl = subscription?.webhookUrl
 
+          console.log(`Sending data to webhook, event: ${ERC20_TRANSFER_TO_EVENT} address: ${to}`)
+
           if (subscription?.webhookUrl) {
             const requestConfig: AxiosRequestConfig = {}
 
