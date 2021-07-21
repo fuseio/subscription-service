@@ -1,95 +1,84 @@
-import EventEmitter from 'events'
 import { Service } from 'typedi'
-import { Interface } from '@ethersproject/abi'
-import Axios, { AxiosRequestConfig } from 'axios'
-import config from 'config'
+import { Log } from '@ethersproject/providers'
 import ProviderService from './provider'
-import ERC20_ABI from '@constants/abi/erc20.json'
-import { ERC20_TRANSFER_EVENT_HASH, ERC20_TRANSFER_TO_EVENT } from '@constants/events'
+import { TRANSFER_TO_EVENT } from '@constants/events'
 import SubscriptionService from './subscription'
-import { isStudioUrl } from '@utils/index'
-
-interface Log {
-  topics: Array<string>;
-  data: string;
-  address: string;
-  transactionHash: string;
-}
+import erc20TransferToFilter from '../filters/event/erc20TransferFilter'
+import EventFilter from '../models/EventFilter'
+import BroadcastService from './broadcast'
+import { parseLog } from '@utils/index'
+import IEventFilter from 'filters/event/IEventFilter'
 
 @Service()
 export default class EventService {
-    readonly eventManager: EventEmitter
+  eventfilters: Array<any> = []
 
-    constructor (
+  constructor (
       private readonly providerService: ProviderService,
-      private readonly subscriptionService: SubscriptionService) {
-      this.eventManager = new EventEmitter()
+      private readonly subscriptionService: SubscriptionService,
+      private readonly broadcastService: BroadcastService
+  ) {}
+
+  get provider () {
+    return this.providerService.getProvider()
+  }
+
+  init () {
+    this.eventfilters.push(erc20TransferToFilter)
+
+    this.provider.on('block', this.processEventsInBlock.bind(this))
+  }
+
+  private processEventsInBlock (block: number) {
+    this.eventfilters.forEach((filter) => this.processEventsForFilter(block, filter))
+  }
+
+  private async processEventsForFilter (latestBlock: number, eventFilter: IEventFilter) {
+    const eventFilterModel = await EventFilter.findOneAndUpdate(
+      { type: eventFilter.type },
+      { type: eventFilter.type, lastSyncedBlock: latestBlock },
+      { upsert: true }
+    )
+
+    const logs = await this.provider.getLogs({
+      ...eventFilter.filter,
+      fromBlock: eventFilterModel?.lastSyncedBlock || latestBlock,
+      toBlock: latestBlock
+    })
+
+    for (const log of logs) {
+      await this.processEvent(log, eventFilter)
     }
 
-    get provider () {
-      return this.providerService.getProvider()
+    await eventFilterModel?.update({ lastSyncedBlock: latestBlock })
+  }
+
+  async processEvent (log: Log, eventFilter: IEventFilter) {
+    const data = parseLog(log, eventFilter.abi)
+
+    if (eventFilter.type === erc20TransferToFilter.type) {
+      await this.processErc20TransferEvent(data)
     }
+  }
 
-    addEvents () {
-      this.addErc20TransferToEvent()
-    }
+  async processErc20TransferEvent (data: any) {
+    try {
+      const toAddress = data.args[1]
+      const userSubscription = await this.subscriptionService.getSubscription(
+        TRANSFER_TO_EVENT,
+        toAddress
+      )
 
-    addErc20TransferToEvent () {
-      const handler = async (log: Log) => {
-        const erc20Interface = new Interface(ERC20_ABI)
-        const data = erc20Interface.parseLog(log)
-        const { args: [, to] } = data
+      if (userSubscription) {
+        console.log(`Sending data to webhook, event: ${TRANSFER_TO_EVENT} address: ${toAddress}`)
 
-        const result = {
-          address: log?.address,
-          transactionHash: log?.transactionHash,
-          name: data?.name,
-          signature: data?.signature,
-          topic: data?.topic,
-          args: data?.args
-        }
-
-        const isSubscribed = await this.subscriptionService
-          .isSubscribed(ERC20_TRANSFER_TO_EVENT, to)
-
-        if (isSubscribed) {
-          this.eventManager.emit(ERC20_TRANSFER_TO_EVENT, result, to)
-        }
+        await this.broadcastService.broadcastContractEvent(
+          userSubscription,
+          data
+        )
       }
-
-      this.provider.on([ERC20_TRANSFER_EVENT_HASH], handler)
+    } catch (e) {
+      console.error('Failed to send data to webhookUrl')
     }
-
-    addHandlers () {
-      this.addErc20TransferToHandler()
-    }
-
-    addErc20TransferToHandler () {
-      this.eventManager.on(ERC20_TRANSFER_TO_EVENT, async (data, to) => {
-        let webhookUrl
-
-        try {
-          const subscription = await this.subscriptionService
-            .getSubscription(ERC20_TRANSFER_TO_EVENT, to)
-          webhookUrl = subscription?.webhookUrl
-
-          console.log(`Sending data to webhook, event: ${ERC20_TRANSFER_TO_EVENT} address: ${to}`)
-
-          if (subscription?.webhookUrl) {
-            const requestConfig: AxiosRequestConfig = {}
-
-            if (isStudioUrl(subscription.webhookUrl)) {
-              const jwt: string = config.get('studio.jwt')
-              requestConfig.headers = {
-                Authorization: `Bearer ${jwt}`
-              }
-            }
-
-            await Axios.post(subscription.webhookUrl, data, requestConfig)
-          }
-        } catch (e) {
-          console.error(`Failed to send data to webhookUrl: ${webhookUrl}`)
-        }
-      })
-    }
+  }
 }

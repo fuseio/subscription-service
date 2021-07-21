@@ -2,6 +2,7 @@ import config from 'config'
 import Container from 'typedi'
 import mongoose from 'mongoose'
 import EventService from '@services/event'
+import TransactionFilterService from '@services/transactionFilter'
 
 export const initDb = () => {
   mongoose.set('debug', config.get('mongo.debug'))
@@ -16,7 +17,8 @@ export const initDb = () => {
 
 export const initServices = async () => {
   const eventService = Container.get(EventService)
+  const transactionFilterService = Container.get(TransactionFilterService)
 
-  eventService.addHandlers()
-  eventService.addEvents()
+  transactionFilterService.init()
+  eventService.init()
 }

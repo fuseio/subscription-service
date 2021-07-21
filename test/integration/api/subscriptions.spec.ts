@@ -10,10 +10,10 @@ describe('/subscribe', () => {
     service.client.flushdb(done)
   })
 
-  describe('POST /subscribe/erc20-transfers-to', () => {
+  describe('POST /subscribe/transfers-to', () => {
     test('given address, webhookUrl returns 200 and message', async () => {
       const { status, body } = await request(app)
-        .post('/api/v1/subscribe/erc20-transfers-to')
+        .post('/api/v1/subscribe/transfers-to')
         .send({
           address: '0x5670d7076E7b3604ceb07c003ff0920490756587',
           webhookUrl: 'http://xyz.com/webhooks'
@@ -25,7 +25,7 @@ describe('/subscribe', () => {
 
     test('given no address, webhookUrl returns 400', async () => {
       const { status } = await request(app)
-        .post('/api/v1/subscribe/erc20-transfers-to')
+        .post('/api/v1/subscribe/transfers-to')
         .send({
           address: '',
           webhookUrl: ''
@@ -48,17 +48,17 @@ describe('/subscribe', () => {
 })
 
 describe('/unsubcribe', () => {
-  describe('POST /unsubscribe/erc20-transfers-to', () => {
+  describe('POST /unsubscribe/transfers-to', () => {
     test('given address returns 200 and message', async () => {
       await request(app)
-        .post('/api/v1/subscribe/erc20-transfers-to')
+        .post('/api/v1/subscribe/transfers-to')
         .send({
           address: '0x5670d7076E7b3604ceb07c003ff0920490756587',
           webhookUrl: 'http://xyz.com/webhooks'
         })
 
       const { status, body } = await request(app)
-        .post('/api/v1/unsubscribe/erc20-transfers-to')
+        .post('/api/v1/unsubscribe/transfers-to')
         .send({
           address: '0x5670d7076E7b3604ceb07c003ff0920490756587'
         })
@@ -69,14 +69,14 @@ describe('/unsubcribe', () => {
 
     test('given no address returns 400', async () => {
       await request(app)
-        .post('/api/v1/subscribe/erc20-transfers-to')
+        .post('/api/v1/subscribe/transfers-to')
         .send({
           address: '0x5670d7076E7b3604ceb07c003ff0920490756587',
           webhookUrl: 'http://xyz.com/webhooks'
         })
 
       const { status } = await request(app)
-        .post('/api/v1/unsubscribe/erc20-transfers-to')
+        .post('/api/v1/unsubscribe/transfers-to')
         .send({
           address: ''
         })
