@@ -6,7 +6,8 @@ import ProviderService from './provider'
 import SubscriptionService from './subscription'
 import BroadcastService from './broadcast'
 import { TRANSFER_TO_EVENT } from '@constants/events'
-import TransactionFilterModel from '@models/TransactionFilter'
+import BlockTracker from '@models/BlockTracker'
+import { parseTransaction } from '@utils/index'
 
 @Service()
 export default class TransactionFilterService {
@@ -25,47 +26,53 @@ export default class TransactionFilterService {
   init () {
     this.transactionFilters.push(nativeTransferToTransactionFilter)
 
-    // before we start listening
-
-    this.provider.on('block', this.processTransactionsInBlock.bind(this))
+    this.start()
   }
 
-  async processTransactionsInBlock (blockNumber: number) {
-    this.transactionFilters.forEach(filter => this.processTransactionsForFilter(blockNumber, filter))
-  }
+  async start () {
+    const latestBlock = await this.provider.getBlock('latest')
+    const blockTracker = await this.getBlockTracker()
 
-  async processTransactionsForFilter (blockNumber: number, transactionFilter: ITransactionFilter) {
-    const transactionFilterModel = await TransactionFilterModel.findOneAndUpdate(
-      { type: transactionFilter.type },
-      { type: transactionFilter.type, lastSyncedBlock: blockNumber },
-      { upsert: true }
+    await this.processBlocks(
+      blockTracker.block + 1 || latestBlock.number,
+      latestBlock.number
     )
-    if (!transactionFilterModel) return
 
-    const transactions = await this.fetchTransactions(transactionFilterModel?.lastSyncedBlock, blockNumber)
-    const filteredTransactions = transactions.filter(transactionFilter.filter)
-
-    for (const transaction of filteredTransactions) {
-      await this.processTransaction(transaction, transactionFilter)
-    }
-
-    await transactionFilterModel.update({ lastSyncedBlock: blockNumber })
+    this.start()
   }
 
-  async fetchTransactions (fromBlock: number, toBlock: number) {
-    const transactions = []
+  async processBlocks (fromBlock: number, toBlock: number) {
+    console.log(`TransactionFilter: Processing blocks from ${fromBlock} to ${toBlock}`)
 
     for (let i = fromBlock; i <= toBlock; i++) {
-      const transactionsFromBlock = await this.provider.getBlockWithTransactions(i)
-      transactions.push(...transactionsFromBlock.transactions)
+      await this.processBlock(i)
     }
-
-    return transactions
   }
 
+  async processBlock (blockNumber: number) {
+    const block = await this.provider.getBlockWithTransactions(blockNumber)
+
+    // TODO: maybe just run all filters on transaction and return transactions
+    for (const transactionFilter of this.transactionFilters) {
+      const filtered = block.transactions.filter(transactionFilter.filter)
+
+      for (const transaction of filtered) {
+        await this.processTransaction(transaction, transactionFilter)
+      }
+    }
+
+    const blockTracker = await this.getBlockTracker()
+    await blockTracker.update({ block: block.number })
+
+    console.log(`TransactionFilter: Processed block ${block.number}`)
+  }
+
+  // TODO: maybe we can just pass on the transaction regardless of filter type
   async processTransaction (transaction: TransactionResponse, filter: any) {
+    const parsedTransaction = parseTransaction(transaction)
+
     if (filter.type === nativeTransferToTransactionFilter.type) {
-      await this.processNativeTransfer(transaction)
+      await this.processNativeTransfer(parsedTransaction)
     }
   }
 
@@ -87,6 +94,16 @@ export default class TransactionFilterService {
       }
     } catch (e) {
       console.log('Failed to process native transfer', e)
+    }
+  }
+
+  async getBlockTracker () {
+    const blockTracker = await BlockTracker.findOne({ filter: 'transaction' })
+    if (blockTracker) {
+      return blockTracker
+    } else {
+      const newBlockTracker = await BlockTracker.create({ filter: 'transaction' })
+      return newBlockTracker
     }
   }
 }
