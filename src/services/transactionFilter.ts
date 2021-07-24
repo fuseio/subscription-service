@@ -59,7 +59,7 @@ export default class TransactionFilterService {
       const filtered = block.transactions.filter(transactionFilter.filter)
 
       for (const transaction of filtered) {
-        await this.processTransaction(transaction, transactionFilter)
+        await this.processTransaction(transaction)
       }
     }
 
@@ -70,32 +70,17 @@ export default class TransactionFilterService {
   }
 
   // TODO: maybe we can just pass on the transaction regardless of filter type
-  async processTransaction (transaction: TransactionResponse, filter: any) {
-    const parsedTransaction = parseTransaction(transaction)
+  async processTransaction (transaction: TransactionResponse) {
+    const userSubscription = await this.subscriptionService.getSubscription(
+      TRANSFER_TO_EVENT,
+      transaction.to
+    )
 
-    if (filter.type === nativeTransferToTransactionFilter.type) {
-      await this.processNativeTransfer(parsedTransaction)
-    }
-  }
-
-  async processNativeTransfer (transaction: TransactionResponse) {
-    try {
-      const toAddress = transaction.to
-      if (!toAddress) return
-
-      const userSubscription = await this.subscriptionService.getSubscription(
-        TRANSFER_TO_EVENT,
-        toAddress
+    if (userSubscription) {
+      await this.broadcastService.broadcast(
+        userSubscription,
+        parseTransaction(transaction)
       )
-
-      if (userSubscription) {
-        await this.broadcastService.broadcast(
-          userSubscription,
-          transaction
-        )
-      }
-    } catch (e) {
-      console.log('Failed to process native transfer', e)
     }
   }
 

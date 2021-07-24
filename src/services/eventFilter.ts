@@ -47,6 +47,7 @@ export default class EventFilterService {
     console.log(`EventFilter: Processing blocks from ${fromBlock} to ${toBlock}`)
 
     for (let i = fromBlock; i <= toBlock; i++) {
+      // TODO: how to handle this when we encounter an error, should we crash the app or just continue processing the next block
       await this.processBlock(i)
     }
   }
@@ -72,30 +73,19 @@ export default class EventFilterService {
 
   async processEvent (log: Log, eventFilter: IEventFilter) {
     const data = parseLog(log, eventFilter.abi)
+    const toAddress = data.args[1]
+    const userSubscription = await this.subscriptionService.getSubscription(
+      TRANSFER_TO_EVENT,
+      toAddress
+    )
 
-    if (eventFilter.type === erc20TransferToFilter.type) {
-      await this.processErc20TransferEvent(data)
-    }
-  }
+    if (userSubscription) {
+      console.log(`Sending data to webhook, event: ${TRANSFER_TO_EVENT} address: ${toAddress}`)
 
-  async processErc20TransferEvent (data: any) {
-    try {
-      const toAddress = data.args[1]
-      const userSubscription = await this.subscriptionService.getSubscription(
-        TRANSFER_TO_EVENT,
-        toAddress
+      await this.broadcastService.broadcast(
+        userSubscription,
+        data
       )
-
-      if (userSubscription) {
-        console.log(`Sending data to webhook, event: ${TRANSFER_TO_EVENT} address: ${toAddress}`)
-
-        await this.broadcastService.broadcast(
-          userSubscription,
-          data
-        )
-      }
-    } catch (e) {
-      console.error('Failed to send data to webhookUrl')
     }
   }
 

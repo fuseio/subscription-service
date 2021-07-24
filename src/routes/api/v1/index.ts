@@ -19,4 +19,9 @@ router.post(
   SubscriptionsController.unsubscribe
 )
 
+router.get(
+  '/filterStatus/:filterType',
+  SubscriptionsController.filterStatus
+)
+
 export default router
