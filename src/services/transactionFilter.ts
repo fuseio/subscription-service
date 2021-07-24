@@ -4,7 +4,7 @@ import ITransactionFilter from '../filters/transaction/ITransactionFilter'
 import nativeTransferToTransactionFilter from '../filters/transaction/nativeTransferToTransactionFilter'
 import ProviderService from './provider'
 import SubscriptionService from './subscription'
-import BroadcastService from './broadcast'
+import BroadcastService from './broadcast/httpBroadcast'
 import { TRANSFER_TO_EVENT } from '@constants/events'
 import BlockTracker from '@models/BlockTracker'
 import { parseTransaction } from '@utils/index'
@@ -89,7 +89,7 @@ export default class TransactionFilterService {
       )
 
       if (userSubscription) {
-        await this.broadcastService.broadcastTransaction(
+        await this.broadcastService.broadcast(
           userSubscription,
           transaction
         )

@@ -4,7 +4,7 @@ import ProviderService from './provider'
 import { TRANSFER_TO_EVENT } from '@constants/events'
 import SubscriptionService from './subscription'
 import erc20TransferToFilter from '../filters/event/erc20TransferFilter'
-import BroadcastService from './broadcast'
+import BroadcastService from './broadcast/httpBroadcast'
 import { parseLog } from '@utils/index'
 import IEventFilter from 'filters/event/IEventFilter'
 import BlockTracker from '@models/BlockTracker'
@@ -89,7 +89,7 @@ export default class EventFilterService {
       if (userSubscription) {
         console.log(`Sending data to webhook, event: ${TRANSFER_TO_EVENT} address: ${toAddress}`)
 
-        await this.broadcastService.broadcastContractEvent(
+        await this.broadcastService.broadcast(
           userSubscription,
           data
         )

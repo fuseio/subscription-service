@@ -1,15 +1,8 @@
 import '../../utils/setup'
 import request from 'supertest'
 import app from '../../../src/app'
-import Container from 'typedi'
-import SubscriptionService from '../../../src/services/subscription'
 
 describe('/subscribe', () => {
-  beforeEach((done) => {
-    const service = Container.get(SubscriptionService)
-    service.client.flushdb(done)
-  })
-
   describe('POST /subscribe/transfers-to', () => {
     test('given address, webhookUrl returns 200 and message', async () => {
       const { status, body } = await request(app)

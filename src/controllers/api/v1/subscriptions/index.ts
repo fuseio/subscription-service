@@ -13,12 +13,12 @@ export default class SubscriptionsController {
       const userService = Container.get(UserService)
       const subscriptionService = Container.get(SubscriptionService)
 
-      const hasSubscription = await subscriptionService.isSubscribed(
+      const subscription = await subscriptionService.getSubscription(
         eventName,
         address
       )
 
-      if (hasSubscription) {
+      if (subscription) {
         throw new RequestError(400, 'User already subscribed')
       }
 
