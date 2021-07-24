@@ -42,6 +42,8 @@ export default class EventFilterService {
   }
 
   async processBlocks (fromBlock: number, toBlock: number) {
+    if (fromBlock > toBlock) return
+
     console.log(`EventFilter: Processing blocks from ${fromBlock} to ${toBlock}`)
 
     for (let i = fromBlock; i <= toBlock; i++) {
