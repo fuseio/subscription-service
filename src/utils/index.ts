@@ -22,7 +22,3 @@ export const parseLog = (log: Log, abi: any) => {
     args: parsedLog.args
   }
 }
-
-export const parseTransaction = (transaction: any) => {
-  return transaction
-}

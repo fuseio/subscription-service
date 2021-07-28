@@ -7,7 +7,8 @@ import erc20TransferToFilter from '../filters/event/erc20TransferFilter'
 import BroadcastService from './broadcast/httpBroadcast'
 import { parseLog } from '@utils/index'
 import IEventFilter from 'filters/event/IEventFilter'
-import BlockTracker from '@models/BlockTracker'
+import FilterStatusService from './filterStatus'
+import logPerformance from '../decorators/logPerformance'
 
 @Service()
 export default class EventFilterService {
@@ -16,7 +17,8 @@ export default class EventFilterService {
   constructor (
       private readonly providerService: ProviderService,
       private readonly subscriptionService: SubscriptionService,
-      private readonly broadcastService: BroadcastService
+      private readonly broadcastService: BroadcastService,
+      private readonly filterStatusService: FilterStatusService
   ) {}
 
   get provider () {
@@ -30,15 +32,19 @@ export default class EventFilterService {
   }
 
   async start () {
-    const latestBlock = await this.provider.getBlock('latest')
-    const blockTracker = await this.getBlockTracker()
+    while (true) {
+      const { number: toBlockNumber } = await this.provider.getBlock('latest')
 
-    await this.processBlocks(
-      blockTracker.block + 1 || latestBlock.number,
-      latestBlock.number
-    )
+      const filterStatus = await this.filterStatusService.getFilterStatus('event')
+      const fromBlockNumber = filterStatus.blockNumber
+        ? filterStatus.blockNumber + 1
+        : toBlockNumber
 
-    this.start()
+      await this.processBlocks(
+        fromBlockNumber,
+        toBlockNumber
+      )
+    }
   }
 
   async processBlocks (fromBlock: number, toBlock: number) {
@@ -47,11 +53,11 @@ export default class EventFilterService {
     console.log(`EventFilter: Processing blocks from ${fromBlock} to ${toBlock}`)
 
     for (let i = fromBlock; i <= toBlock; i++) {
-      // TODO: how to handle this when we encounter an error, should we crash the app or just continue processing the next block
       await this.processBlock(i)
     }
   }
 
+  @logPerformance('EventFilter::ProcessBlock')
   async processBlock (blockNumber: number) {
     for (const eventFilter of this.eventfilters) {
       const logs = await this.provider.getLogs({
@@ -65,19 +71,46 @@ export default class EventFilterService {
       }
     }
 
-    const blockTracker = await this.getBlockTracker()
-    await blockTracker.update({ block: blockNumber })
+    await this.filterStatusService.updateBlockNumber('event', blockNumber)
 
     console.log(`EventFilter: Processed block ${blockNumber}`)
   }
 
-  async processEvent (log: Log, eventFilter: IEventFilter) {
-    const data = parseLog(log, eventFilter.abi)
-    const toAddress = data.args[1]
+  async processEvent (log: Log, filter: IEventFilter) {
+    if (filter.name === erc20TransferToFilter.name) {
+      await this.processErc20TransferEvent(log, filter)
+    }
+  }
+
+  async processErc20TransferEvent (log: Log, filter: IEventFilter) {
+    const parsedLog = parseLog(log, filter.abi)
+    const toAddress = parsedLog.args[1]
+    const fromAddress = parsedLog.args[0]
+
+    const isToSubscribed = await this.subscriptionService.isSubscribed(filter.event, toAddress)
+    if (!isToSubscribed) {
+      return
+    }
+
     const userSubscription = await this.subscriptionService.getSubscription(
-      TRANSFER_TO_EVENT,
+      filter.event,
       toAddress
     )
+
+    const isFromSubscribed = await this.subscriptionService.isSubscribed(filter.event, fromAddress)
+    const subscribers = {
+      to: toAddress,
+      ...(isFromSubscribed && { from: fromAddress })
+    }
+
+    const data = {
+      to: parsedLog.args[1],
+      from: parsedLog.args[0],
+      value: parsedLog.args[2],
+      txHash: parsedLog.transactionHash,
+      address: parsedLog.address,
+      subscribers
+    }
 
     if (userSubscription) {
       console.log(`Sending data to webhook, event: ${TRANSFER_TO_EVENT} address: ${toAddress}`)
@@ -86,16 +119,6 @@ export default class EventFilterService {
         userSubscription,
         data
       )
-    }
-  }
-
-  async getBlockTracker () {
-    const blockTracker = await BlockTracker.findOne({ filter: 'event' })
-    if (blockTracker) {
-      return blockTracker
-    } else {
-      const newBlockTracker = await BlockTracker.create({ filter: 'event' })
-      return newBlockTracker
     }
   }
 }

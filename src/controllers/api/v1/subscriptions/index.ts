@@ -3,7 +3,7 @@ import Container from 'typedi'
 import SubscriptionService from '@services/subscription'
 import UserService from '@services/user'
 import RequestError from '@models/RequestError'
-import BlockTracker from '@models/BlockTracker'
+import FilterStatus from '@models/FilterStatus'
 
 export default class SubscriptionsController {
   static async subscribe (req: Request, res: Response, next: NextFunction) {
@@ -66,8 +66,8 @@ export default class SubscriptionsController {
       const { filterType } = req.params
 
       if (filterType === 'event' || filterType === 'transaction') {
-        const blockTracker = await BlockTracker.findOne({ filter: filterType })
-        res.json({ filter: blockTracker?.filter, block: blockTracker?.block })
+        const filterStatus = await FilterStatus.findOne({ filter: filterType })
+        res.json({ filter: filterStatus?.filter, blockNumber: filterStatus?.blockNumber })
       } else {
         throw new RequestError(400, 'Unsupported filter type')
       }

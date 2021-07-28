@@ -1,13 +1,12 @@
 import { Service } from 'typedi'
 import { TransactionResponse } from '@ethersproject/abstract-provider'
 import ITransactionFilter from '../filters/transaction/ITransactionFilter'
-import nativeTransferToTransactionFilter from '../filters/transaction/nativeTransferToTransactionFilter'
+import nativeTransferTransactionFilter from '../filters/transaction/nativeTransferTransactionFilter'
 import ProviderService from './provider'
 import SubscriptionService from './subscription'
 import BroadcastService from './broadcast/httpBroadcast'
-import { TRANSFER_TO_EVENT } from '@constants/events'
-import BlockTracker from '@models/BlockTracker'
-import { parseTransaction } from '@utils/index'
+import FilterStatusService from './filterStatus'
+import logPerformance from '../decorators/logPerformance'
 
 @Service()
 export default class TransactionFilterService {
@@ -16,7 +15,8 @@ export default class TransactionFilterService {
   constructor (
     private readonly providerService: ProviderService,
     private readonly subscriptionService: SubscriptionService,
-    private readonly broadcastService: BroadcastService
+    private readonly broadcastService: BroadcastService,
+    private readonly filterStatusService: FilterStatusService
   ) {}
 
   get provider () {
@@ -24,21 +24,25 @@ export default class TransactionFilterService {
   }
 
   init () {
-    this.transactionFilters.push(nativeTransferToTransactionFilter)
+    this.transactionFilters.push(nativeTransferTransactionFilter)
 
     this.start()
   }
 
   async start () {
-    const latestBlock = await this.provider.getBlock('latest')
-    const blockTracker = await this.getBlockTracker()
+    while (true) {
+      const { number: toBlockNumber } = await this.provider.getBlock('latest')
 
-    await this.processBlocks(
-      blockTracker.block + 1 || latestBlock.number,
-      latestBlock.number
-    )
+      const filterStatus = await this.filterStatusService.getFilterStatus('transaction')
+      const fromBlockNumber = filterStatus.blockNumber
+        ? filterStatus.blockNumber + 1
+        : toBlockNumber
 
-    this.start()
+      await this.processBlocks(
+        fromBlockNumber,
+        toBlockNumber
+      )
+    }
   }
 
   async processBlocks (fromBlock: number, toBlock: number) {
@@ -51,46 +55,59 @@ export default class TransactionFilterService {
     }
   }
 
+  @logPerformance('TransactionFilter::ProcessBlock')
   async processBlock (blockNumber: number) {
     const block = await this.provider.getBlockWithTransactions(blockNumber)
 
-    // TODO: maybe just run all filters on transaction and return transactions
     for (const transactionFilter of this.transactionFilters) {
       const filtered = block.transactions.filter(transactionFilter.filter)
 
       for (const transaction of filtered) {
-        await this.processTransaction(transaction)
+        await this.processTransaction(transaction, transactionFilter)
       }
     }
 
-    const blockTracker = await this.getBlockTracker()
-    await blockTracker.update({ block: block.number })
+    await this.filterStatusService.updateBlockNumber('transaction', block.number)
 
     console.log(`TransactionFilter: Processed block ${block.number}`)
   }
 
-  // TODO: maybe we can just pass on the transaction regardless of filter type
-  async processTransaction (transaction: TransactionResponse) {
+  async processTransaction (transaction: TransactionResponse, filter: ITransactionFilter) {
+    if (filter.name === nativeTransferTransactionFilter.name) {
+      await this.processNativeTransferEvent(transaction, filter)
+    }
+  }
+
+  async processNativeTransferEvent (transaction: TransactionResponse, filter: ITransactionFilter) {
+    const isToSubscribed = await this.subscriptionService.isSubscribed(filter.event, transaction.to)
+    if (!isToSubscribed) {
+      return
+    }
+
     const userSubscription = await this.subscriptionService.getSubscription(
-      TRANSFER_TO_EVENT,
+      filter.event,
       transaction.to
     )
+
+    const isFromSubscribed = await this.subscriptionService.isSubscribed(filter.event, transaction.from)
+    const subscribers = {
+      to: transaction.to,
+      ...(isFromSubscribed && { from: transaction.from })
+    }
+
+    const data = {
+      to: transaction.to,
+      from: transaction.from,
+      value: transaction.value,
+      txHash: transaction.hash,
+      subscribers
+    }
 
     if (userSubscription) {
       await this.broadcastService.broadcast(
         userSubscription,
-        parseTransaction(transaction)
+        data
       )
-    }
-  }
-
-  async getBlockTracker () {
-    const blockTracker = await BlockTracker.findOne({ filter: 'transaction' })
-    if (blockTracker) {
-      return blockTracker
-    } else {
-      const newBlockTracker = await BlockTracker.create({ filter: 'transaction' })
-      return newBlockTracker
     }
   }
 }

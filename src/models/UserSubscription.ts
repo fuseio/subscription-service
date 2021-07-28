@@ -13,6 +13,8 @@ const userSubscriptionSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'User'
   }
+}, {
+  timestamps: true
 })
 
 export interface UserSubscriptionDoc extends Document {
