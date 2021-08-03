@@ -5,7 +5,7 @@ import { TRANSFER_TO_EVENT } from '@constants/events'
 import SubscriptionService from './subscription'
 import erc20TransferToFilter from '../filters/event/erc20TransferFilter'
 import BroadcastService from './broadcast/httpBroadcast'
-import { parseLog } from '@utils/index'
+import { parseLog, sleep } from '@utils/index'
 import IEventFilter from 'filters/event/IEventFilter'
 import FilterStatusService from './filterStatus'
 import logPerformance from '../decorators/logPerformance'
@@ -39,6 +39,8 @@ export default class EventFilterService {
       const fromBlockNumber = filterStatus.blockNumber
         ? filterStatus.blockNumber + 1
         : toBlockNumber
+
+      if (fromBlockNumber > toBlockNumber) await sleep(1000)
 
       await this.processBlocks(
         fromBlockNumber,
@@ -106,7 +108,7 @@ export default class EventFilterService {
     const data = {
       to: parsedLog.args[1],
       from: parsedLog.args[0],
-      value: parsedLog.args[2],
+      value: parsedLog.args[2].toString(),
       txHash: parsedLog.transactionHash,
       address: parsedLog.address,
       subscribers

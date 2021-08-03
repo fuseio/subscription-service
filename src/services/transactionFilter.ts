@@ -7,6 +7,7 @@ import SubscriptionService from './subscription'
 import BroadcastService from './broadcast/httpBroadcast'
 import FilterStatusService from './filterStatus'
 import logPerformance from '../decorators/logPerformance'
+import { sleep } from '@utils/index'
 
 @Service()
 export default class TransactionFilterService {
@@ -37,6 +38,8 @@ export default class TransactionFilterService {
       const fromBlockNumber = filterStatus.blockNumber
         ? filterStatus.blockNumber + 1
         : toBlockNumber
+
+      if (fromBlockNumber > toBlockNumber) await sleep(1000)
 
       await this.processBlocks(
         fromBlockNumber,
@@ -98,7 +101,7 @@ export default class TransactionFilterService {
     const data = {
       to: transaction.to,
       from: transaction.from,
-      value: transaction.value,
+      value: transaction.value.toString(),
       txHash: transaction.hash,
       subscribers
     }

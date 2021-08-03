@@ -22,3 +22,7 @@ export const parseLog = (log: Log, abi: any) => {
     args: parsedLog.args
   }
 }
+
+export const sleep = (time: number) => {
+  return new Promise((resolve) => setTimeout(resolve, time))
+}
