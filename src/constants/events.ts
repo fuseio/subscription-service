@@ -1,6 +1,6 @@
 import { id } from '@ethersproject/hash'
 
-export const TRANSFER_TO_EVENT = 'transfers-to'
+export const TRANSFER_TO_EVENT = 'erc20-transfers-to'
 
 export const ERC20_TRANSFER_EVENT = 'Transfer(address,address,uint256)'
 

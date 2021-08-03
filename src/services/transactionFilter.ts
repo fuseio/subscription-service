@@ -93,9 +93,9 @@ export default class TransactionFilterService {
     )
 
     const isFromSubscribed = await this.subscriptionService.isSubscribed(filter.event, transaction.from)
-    const subscribers = {
-      to: transaction.to,
-      ...(isFromSubscribed && { from: transaction.from })
+    const subscribers = [transaction.to]
+    if (isFromSubscribed) {
+      subscribers.push(transaction.from)
     }
 
     const data = {

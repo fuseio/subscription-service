@@ -100,9 +100,9 @@ export default class EventFilterService {
     )
 
     const isFromSubscribed = await this.subscriptionService.isSubscribed(filter.event, fromAddress)
-    const subscribers = {
-      to: toAddress,
-      ...(isFromSubscribed && { from: fromAddress })
+    const subscribers = [toAddress]
+    if (isFromSubscribed) {
+      subscribers.push(fromAddress)
     }
 
     const data = {
