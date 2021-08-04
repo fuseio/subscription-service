@@ -37,14 +37,18 @@ export default class SubscriptionService {
     })
   }
 
-  async isSubscribed (eventName: string, address: string) {
+  async isSubscribed (eventName?: string, address?: string) {
+    if (!eventName || !address) return false
+
     const key = this.buildKey(address, eventName)
 
     const value = await this.redisGet(key)
     return !!value
   }
 
-  async getSubscription (eventName: string, address: string) {
+  async getSubscription (eventName?: string, address?: string) {
+    if (!eventName || !address) return null
+
     const user = await this.userService.getUser(address)
     if (user) {
       const subscription = await userSubscription.findOne({
@@ -53,6 +57,8 @@ export default class SubscriptionService {
       })
       return subscription
     }
+
+    return null
   }
 
   private buildKey (address: string, eventName: string) {

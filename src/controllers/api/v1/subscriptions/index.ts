@@ -3,6 +3,7 @@ import Container from 'typedi'
 import SubscriptionService from '@services/subscription'
 import UserService from '@services/user'
 import RequestError from '@models/RequestError'
+import FilterStatus from '@models/FilterStatus'
 
 export default class SubscriptionsController {
   static async subscribe (req: Request, res: Response, next: NextFunction) {
@@ -13,12 +14,12 @@ export default class SubscriptionsController {
       const userService = Container.get(UserService)
       const subscriptionService = Container.get(SubscriptionService)
 
-      const hasSubscription = await subscriptionService.isSubscribed(
+      const subscription = await subscriptionService.getSubscription(
         eventName,
         address
       )
 
-      if (hasSubscription) {
+      if (subscription) {
         throw new RequestError(400, 'User already subscribed')
       }
 
@@ -55,6 +56,21 @@ export default class SubscriptionsController {
       await subscriptionService.unsubscribe(user, eventName)
 
       res.json({ message: 'Successfully unsubscribed from event' })
+    } catch (e) {
+      next(e)
+    }
+  }
+
+  static async filterStatus (req: Request, res: Response, next: NextFunction) {
+    try {
+      const { filterType } = req.params
+
+      if (filterType === 'event' || filterType === 'transaction') {
+        const filterStatus = await FilterStatus.findOne({ filter: filterType })
+        res.json({ filter: filterStatus?.filter, blockNumber: filterStatus?.blockNumber })
+      } else {
+        throw new RequestError(400, 'Unsupported filter type')
+      }
     } catch (e) {
       next(e)
     }

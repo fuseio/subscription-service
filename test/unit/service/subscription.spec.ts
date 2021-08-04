@@ -15,8 +15,6 @@ describe('SubscriptionService', () => {
 
     describe('subscribe', () => {
         test('should subcribe given address to event', async () => {
-           const service = new SubscriptionService(userService)
-
            const user = await userService.createUser('0x0')
            const eventName = 'event'
            const webhookUrl = 'http://xyz.com/webhooks'
@@ -31,8 +29,6 @@ describe('SubscriptionService', () => {
 
     describe('unsubscribe', () => {
         test('should unsubcribe given address from event', async () => {
-            const service = new SubscriptionService(userService)
-            
             const user = await userService.createUser('0x0')
             const eventName = 'event'
             const webhookUrl = 'http://xyz.com/webhooks'
@@ -49,8 +45,6 @@ describe('SubscriptionService', () => {
 
     describe('isSubscribed', () => {
         test('should return true if address is subscribed to event', async () => {
-            const service = new SubscriptionService(userService)
-            
             const user = await userService.createUser('0x0')
             const eventName = 'event'
             const webhookUrl = 'http://xyz.com/webhooks'
@@ -63,8 +57,6 @@ describe('SubscriptionService', () => {
         })
 
         test('should return false if address is not subscribed to event', async () => {
-            const service = new SubscriptionService(userService)
-            
             const user = await userService.createUser('0x0')
             const eventName = 'event'
             
@@ -76,8 +68,6 @@ describe('SubscriptionService', () => {
 
     describe('getSubscription', () => {
         test('should return subscription if subscribed', async () => {
-            const service = new SubscriptionService(userService)
-            
             const user = await userService.createUser('0x0')
             const eventName = 'event'
             const webhookUrl = 'http://xyz.com/webhooks'
