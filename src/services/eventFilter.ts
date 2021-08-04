@@ -111,6 +111,8 @@ export default class EventFilterService {
       value: parsedLog.args[2].toString(),
       txHash: parsedLog.transactionHash,
       address: parsedLog.address,
+      blockNumber: log.blockNumber,
+      blockHash: log.blockHash,
       subscribers
     }
 
