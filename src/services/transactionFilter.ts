@@ -103,6 +103,8 @@ export default class TransactionFilterService {
       from: transaction.from,
       value: transaction.value.toString(),
       txHash: transaction.hash,
+      blockNumber: transaction.blockNumber,
+      blockHash: transaction.blockHash,
       subscribers
     }
 
