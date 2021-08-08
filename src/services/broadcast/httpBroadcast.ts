@@ -12,8 +12,12 @@ export default class HttpBroadcastService implements IBroadcast {
       const axiosConfig = isStudioUrl(subscription.webhookUrl)
         ? this.buildJwtRequestConfig()
         : {}
-
-      return Axios.post(subscription.webhookUrl, data, axiosConfig)
+      try {
+        const response = await Axios.post(subscription.webhookUrl, data, axiosConfig)
+        return response
+      } catch (err) {
+        console.error(err)
+      }
     }
   }
 
