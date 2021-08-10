@@ -69,7 +69,8 @@ export default class TransactionFilterService {
         try {
           await this.processTransaction(transaction, transactionFilter)
         } catch (error) {
-          console.error(`Failed to process transaction ${transaction}. with error:`)
+          console.error('Failed to process transaction:')
+          console.error({ transaction })
           console.error(error)
         }
       }
