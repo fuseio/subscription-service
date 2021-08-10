@@ -69,7 +69,12 @@ export default class EventFilterService {
       })
 
       for (const log of logs) {
-        await this.processEvent(log, eventFilter)
+        try {
+          await this.processEvent(log, eventFilter)
+        } catch (error) {
+          console.error(`Failed to process log ${log}. with error:`)
+          console.error(error)
+        }
       }
     }
 
