@@ -66,7 +66,12 @@ export default class TransactionFilterService {
       const filtered = block.transactions.filter(transactionFilter.filter)
 
       for (const transaction of filtered) {
-        await this.processTransaction(transaction, transactionFilter)
+        try {
+          await this.processTransaction(transaction, transactionFilter)
+        } catch (error) {
+          console.error(`Failed to process transaction ${transaction}. with error:`)
+          console.error(error)
+        }
       }
     }
 
