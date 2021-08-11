@@ -8,6 +8,7 @@ import BroadcastService from './broadcast/httpBroadcast'
 import FilterStatusService from './filterStatus'
 import logPerformance from '../decorators/logPerformance'
 import { sleep } from '@utils/index'
+import Sentry from '@services/errors/sentry'
 
 @Service()
 export default class TransactionFilterService {
@@ -72,6 +73,8 @@ export default class TransactionFilterService {
           console.error('Failed to process transaction:')
           console.error({ transaction })
           console.error(error)
+          Sentry.setContext("transaction", transaction);
+          Sentry.captureException(error)
         }
       }
     }

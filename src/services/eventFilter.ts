@@ -76,6 +76,7 @@ export default class EventFilterService {
           console.error('Failed to process log:')
           console.error({ log })
           console.error(error)
+          Sentry.setContext("log", log);
           Sentry.captureException(error)
         }
       }
@@ -87,7 +88,6 @@ export default class EventFilterService {
   }
 
   async processEvent (log: Log, filter: IEventFilter) {
-    throw new Error('test')
     if (filter.name === erc20TransferToFilter.name) {
       await this.processErc20TransferEvent(log, filter)
     }
