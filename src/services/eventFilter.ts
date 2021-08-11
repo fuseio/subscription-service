@@ -9,6 +9,7 @@ import { parseLog, sleep } from '@utils/index'
 import IEventFilter from 'filters/event/IEventFilter'
 import FilterStatusService from './filterStatus'
 import logPerformance from '../decorators/logPerformance'
+import Sentry from '@services/errors/sentry'
 
 @Service()
 export default class EventFilterService {
@@ -75,6 +76,7 @@ export default class EventFilterService {
           console.error('Failed to process log:')
           console.error({ log })
           console.error(error)
+          Sentry.captureException(error)
         }
       }
     }
@@ -85,6 +87,7 @@ export default class EventFilterService {
   }
 
   async processEvent (log: Log, filter: IEventFilter) {
+    throw new Error('test')
     if (filter.name === erc20TransferToFilter.name) {
       await this.processErc20TransferEvent(log, filter)
     }
