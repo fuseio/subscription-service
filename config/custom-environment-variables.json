@@ -28,5 +28,11 @@
   "studio": {
     "baseUrl": "FUSE_STUDIO_BASE_URL",
     "jwt": "FUSE_STUDIO_JWT"
+  },
+  "errors": {
+    "sentry": {
+      "dsn": "FUSE_SUBSCRIPTION_SENTRY_DNS",
+      "tracesSampleRate": "FUSE_SUBSCRIPTION_SAMPLE_RATE"
+    }
   }
 }

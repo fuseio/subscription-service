@@ -9,6 +9,7 @@ import { parseLog, sleep } from '@utils/index'
 import IEventFilter from 'filters/event/IEventFilter'
 import FilterStatusService from './filterStatus'
 import logPerformance from '../decorators/logPerformance'
+import Sentry from '@services/errors/sentry'
 
 @Service()
 export default class EventFilterService {
@@ -75,6 +76,8 @@ export default class EventFilterService {
           console.error('Failed to process log:')
           console.error({ log })
           console.error(error)
+          Sentry.setContext("log", log);
+          Sentry.captureException(error)
         }
       }
     }

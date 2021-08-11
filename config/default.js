@@ -19,5 +19,11 @@ module.exports = {
   studio: {
     baseUrl: 'https://studio.fuse.io',
     jwt: ''
+  },
+  errors: {
+    sentry: {
+      dsn: '',
+      tracesSampleRate: 1.0
+    }
   }
 }

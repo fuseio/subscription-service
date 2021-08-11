@@ -42,6 +42,8 @@
     "@ethersproject/address": "^5.0.10",
     "@ethersproject/hash": "^5.0.11",
     "@ethersproject/providers": "^5.0.23",
+    "@sentry/node": "^6.11.0",
+    "@sentry/tracing": "^6.11.0",
     "async": "^2.6.1",
     "aws-sdk": "^2.405.0",
     "axios": "^0.21.1",
