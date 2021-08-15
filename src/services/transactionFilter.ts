@@ -33,19 +33,30 @@ export default class TransactionFilterService {
 
   async start () {
     while (true) {
-      const { number: toBlockNumber } = await this.provider.getBlock('latest')
+      try {
+        const { number: toBlockNumber } = await this.provider.getBlock('latest')
 
-      const filterStatus = await this.filterStatusService.getFilterStatus('transaction')
-      const fromBlockNumber = filterStatus.blockNumber
-        ? filterStatus.blockNumber + 1
-        : toBlockNumber
+        const filterStatus = await this.filterStatusService.getFilterStatus('transaction')
+        const fromBlockNumber = filterStatus.blockNumber
+          ? filterStatus.blockNumber + 1
+          : toBlockNumber
 
-      if (fromBlockNumber > toBlockNumber) await sleep(1000)
+        if (fromBlockNumber > toBlockNumber) await sleep(1000)
 
-      await this.processBlocks(
-        fromBlockNumber,
-        toBlockNumber
-      )
+        await this.processBlocks(
+          fromBlockNumber,
+          toBlockNumber
+        )
+      } catch (error) {
+        console.error('Failed to process blocks:')
+        console.error(error)
+
+        Sentry.captureException(error, {
+          tags: {
+            filterType: 'TransactionFilter'
+          }
+        })
+      }
     }
   }
 
@@ -73,8 +84,13 @@ export default class TransactionFilterService {
           console.error('Failed to process transaction:')
           console.error({ transaction })
           console.error(error)
-          Sentry.setContext("transaction", transaction);
-          Sentry.captureException(error)
+
+          Sentry.setContext('transaction', transaction)
+          Sentry.captureException(error, {
+            tags: {
+              filterType: 'TransactionFilter'
+            }
+          })
         }
       }
     }

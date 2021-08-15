@@ -34,19 +34,30 @@ export default class EventFilterService {
 
   async start () {
     while (true) {
-      const { number: toBlockNumber } = await this.provider.getBlock('latest')
+      try {
+        const { number: toBlockNumber } = await this.provider.getBlock('latest')
 
-      const filterStatus = await this.filterStatusService.getFilterStatus('event')
-      const fromBlockNumber = filterStatus.blockNumber
-        ? filterStatus.blockNumber + 1
-        : toBlockNumber
+        const filterStatus = await this.filterStatusService.getFilterStatus('event')
+        const fromBlockNumber = filterStatus.blockNumber
+          ? filterStatus.blockNumber + 1
+          : toBlockNumber
 
-      if (fromBlockNumber > toBlockNumber) await sleep(1000)
+        if (fromBlockNumber > toBlockNumber) await sleep(1000)
 
-      await this.processBlocks(
-        fromBlockNumber,
-        toBlockNumber
-      )
+        await this.processBlocks(
+          fromBlockNumber,
+          toBlockNumber
+        )
+      } catch (error) {
+        console.log('Failed to process blocks:')
+        console.error(error)
+
+        Sentry.captureException(error, {
+          tags: {
+            filterType: 'EventFilter'
+          }
+        })
+      }
     }
   }
 
@@ -76,8 +87,13 @@ export default class EventFilterService {
           console.error('Failed to process log:')
           console.error({ log })
           console.error(error)
-          Sentry.setContext("log", log);
-          Sentry.captureException(error)
+
+          Sentry.setContext('log', log)
+          Sentry.captureException(error, {
+            tags: {
+              filterType: 'EventFilter'
+            }
+          })
         }
       }
     }
