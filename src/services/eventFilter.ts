@@ -1,4 +1,5 @@
 import { Service } from 'typedi'
+import config from 'config'
 import { Log } from '@ethersproject/providers'
 import ProviderService from './provider'
 import { TRANSFER_TO_EVENT } from '@constants/events'
@@ -42,7 +43,10 @@ export default class EventFilterService {
           ? filterStatus.blockNumber + 1
           : toBlockNumber
 
-        if (fromBlockNumber >= toBlockNumber) await sleep(5000)
+        if (fromBlockNumber >= toBlockNumber) {
+          const timeout: number = config.get('timeoutInterval')
+          await sleep(timeout)
+        }
 
         await this.processBlocks(
           fromBlockNumber,
