@@ -32,6 +32,9 @@ export default class EventFilterService {
     this.start()
   }
 
+  // latestBlock: 122
+  // currentBlock: 122 + 1 = 123, 121 + 1 = 122
+
   async start () {
     while (true) {
       try {
@@ -42,7 +45,7 @@ export default class EventFilterService {
           ? filterStatus.blockNumber + 1
           : toBlockNumber
 
-        if (fromBlockNumber > toBlockNumber) await sleep(1000)
+        if (fromBlockNumber >= toBlockNumber) await sleep(5000)
 
         await this.processBlocks(
           fromBlockNumber,

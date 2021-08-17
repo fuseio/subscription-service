@@ -41,7 +41,7 @@ export default class TransactionFilterService {
           ? filterStatus.blockNumber + 1
           : toBlockNumber
 
-        if (fromBlockNumber > toBlockNumber) await sleep(1000)
+        if (fromBlockNumber >= toBlockNumber) await sleep(5000)
 
         await this.processBlocks(
           fromBlockNumber,
