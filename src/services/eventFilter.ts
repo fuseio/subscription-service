@@ -32,9 +32,6 @@ export default class EventFilterService {
     this.start()
   }
 
-  // latestBlock: 122
-  // currentBlock: 122 + 1 = 123, 121 + 1 = 122
-
   async start () {
     while (true) {
       try {
