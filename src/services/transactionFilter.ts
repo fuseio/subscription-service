@@ -1,5 +1,6 @@
 import { Service } from 'typedi'
 import { TransactionResponse } from '@ethersproject/abstract-provider'
+import config from 'config'
 import ITransactionFilter from '../filters/transaction/ITransactionFilter'
 import nativeTransferTransactionFilter from '../filters/transaction/nativeTransferTransactionFilter'
 import ProviderService from './provider'
@@ -41,7 +42,10 @@ export default class TransactionFilterService {
           ? filterStatus.blockNumber + 1
           : toBlockNumber
 
-        if (fromBlockNumber > toBlockNumber) await sleep(1000)
+        if (fromBlockNumber >= toBlockNumber) {
+          const timeout: number = config.get('timeoutInterval')
+          await sleep(timeout)
+        }
 
         await this.processBlocks(
           fromBlockNumber,

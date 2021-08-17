@@ -25,5 +25,6 @@ module.exports = {
       dsn: '',
       tracesSampleRate: 1.0
     }
-  }
+  },
+  timeoutInterval: 5000
 }
