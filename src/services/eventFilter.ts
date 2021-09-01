@@ -6,11 +6,13 @@ import { TRANSFER_TO_EVENT } from '@constants/events'
 import SubscriptionService from './subscription'
 import erc20TransferToFilter from '../filters/event/erc20TransferFilter'
 import BroadcastService from './broadcast/httpBroadcast'
-import { parseLog, sleep } from '@utils/index'
+import { getTokenTypeAbi, getTransferEventTokenType, parseLog, sleep, TokenType } from '@utils/index'
 import IEventFilter from 'filters/event/IEventFilter'
 import FilterStatusService from './filterStatus'
 import logPerformance from '../decorators/logPerformance'
 import Sentry from '@services/errors/sentry'
+import ERC20_ABI from '@constants/abi/erc20.json'
+import ERC721_ABI from '@constants/abi/erc721.json'
 
 @Service()
 export default class EventFilterService {
@@ -114,9 +116,12 @@ export default class EventFilterService {
   }
 
   async processErc20TransferEvent (log: Log, filter: IEventFilter) {
-    const parsedLog = parseLog(log, filter.abi)
-    const toAddress = parsedLog.args[1]
+    const tokenType = getTransferEventTokenType(log)
+    const abi = getTokenTypeAbi(tokenType)
+
+    const parsedLog = parseLog(log, abi)
     const fromAddress = parsedLog.args[0]
+    const toAddress = parsedLog.args[1]
 
     const isToSubscribed = await this.subscriptionService.isSubscribed(filter.event, toAddress)
     if (!isToSubscribed) {
@@ -142,6 +147,7 @@ export default class EventFilterService {
       address: parsedLog.address,
       blockNumber: log.blockNumber,
       blockHash: log.blockHash,
+      tokenType: tokenType?.valueOf(),
       subscribers
     }
 
