@@ -5,8 +5,8 @@ import ERC20_ABI from '@constants/abi/erc20.json'
 import ERC721_ABI from '@constants/abi/erc721.json'
 
 export enum TokenType {
-  ERC20 = 'ERC20',
-  ERC721 = 'ERC721'
+  ERC20 = 'ERC-20',
+  ERC721 = 'ERC-721'
 }
 
 export const isProduction = process.env.NODE_ENV === 'production'
