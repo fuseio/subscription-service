@@ -10,6 +10,8 @@ export enum TokenType {
   Native = 'native'
 }
 
+export const NATIVE_FUSE_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+
 export const isProduction = process.env.NODE_ENV === 'production'
 
 export const isStudioUrl = (url: string): boolean => {
