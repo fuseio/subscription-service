@@ -134,7 +134,9 @@ export default class TransactionFilterService {
       txHash: transaction.hash,
       blockNumber: transaction.blockNumber,
       blockHash: transaction.blockHash,
-      subscribers
+      subscribers,
+      tokenType: 'native',
+      address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
     }
 
     if (userSubscription) {
