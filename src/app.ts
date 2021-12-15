@@ -2,7 +2,6 @@ import 'reflect-metadata'
 import 'module-alias/register'
 import 'express-async-errors'
 import express, { Request, Response, NextFunction } from 'express'
-import bodyParser from 'body-parser'
 import morgan from 'morgan'
 import util from 'util'
 import config from 'config'
@@ -17,8 +16,8 @@ const app = express()
 
 app.use(morgan('common'))
 
-app.use(bodyParser.urlencoded({ extended: false }))
-app.use(bodyParser.json())
+app.use(express.urlencoded({ extended: false }))
+app.use(express.json())
 
 app.use(routes)
 
