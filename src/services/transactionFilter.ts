@@ -8,7 +8,7 @@ import SubscriptionService from './subscription'
 import BroadcastService from './broadcast/httpBroadcast'
 import FilterStatusService from './filterStatus'
 import logPerformance from '../decorators/logPerformance'
-import { NATIVE_FUSE_ADDRESS, sleep, TokenType, TokenType } from '@utils/index'
+import { NATIVE_FUSE_ADDRESS, sleep, TokenType } from '@utils/index'
 import Sentry from '@services/errors/sentry'
 
 @Service()
