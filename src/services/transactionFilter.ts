@@ -8,7 +8,7 @@ import SubscriptionService from './subscription'
 import BroadcastService from './broadcast/httpBroadcast'
 import FilterStatusService from './filterStatus'
 import logPerformance from '../decorators/logPerformance'
-import { sleep } from '@utils/index'
+import { NATIVE_FUSE_ADDRESS, sleep, TokenType, TokenType } from '@utils/index'
 import Sentry from '@services/errors/sentry'
 
 @Service()
@@ -135,8 +135,8 @@ export default class TransactionFilterService {
       blockNumber: transaction.blockNumber,
       blockHash: transaction.blockHash,
       subscribers,
-      tokenType: 'native',
-      address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+      tokenType: TokenType.Native,
+      address: NATIVE_FUSE_ADDRESS
     }
 
     if (userSubscription) {
