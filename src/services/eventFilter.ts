@@ -7,7 +7,7 @@ import SubscriptionService from './subscription'
 import erc20TransferToFilter from '../filters/event/erc20TransferFilter'
 import BroadcastService from './broadcast/httpBroadcast'
 import { getTokenTypeAbi, getTransferEventTokenType, parseLog, sleep, TokenType } from '@utils/index'
-import IEventFilter from 'filters/event/IEventFilter'
+import IEventFilter from '@filters/event/IEventFilter'
 import FilterStatusService from './filterStatus'
 import logPerformance from '../decorators/logPerformance'
 import Sentry from '@services/errors/sentry'
@@ -47,6 +47,8 @@ export default class EventFilterService {
 
         if (fromBlockNumber >= toBlockNumber) {
           const timeout: number = config.get('timeoutInterval')
+          console.log(`Sleeping for ${timeout}`);
+          
           await sleep(timeout)
         }
 
@@ -67,6 +69,7 @@ export default class EventFilterService {
     }
   }
 
+  @logPerformance('EventFilter::ProcessBlocks')
   async processBlocks (fromBlock: number, toBlock: number) {
     if (fromBlock > toBlock) return
 
@@ -109,12 +112,14 @@ export default class EventFilterService {
     console.log(`EventFilter: Processed block ${blockNumber}`)
   }
 
+  @logPerformance('EventFilter::ProcessEvent')
   async processEvent (log: Log, filter: IEventFilter) {
     if (filter.name === erc20TransferToFilter.name) {
       await this.processErc20TransferEvent(log, filter)
     }
   }
 
+  @logPerformance('EventFilter::ProcessErc20TransferEvent')
   async processErc20TransferEvent (log: Log, filter: IEventFilter) {
     const tokenType = getTransferEventTokenType(log)
     const abi = getTokenTypeAbi(tokenType)

@@ -64,6 +64,7 @@ export default class TransactionFilterService {
     }
   }
 
+  @logPerformance('TransactionFilter::ProcessBlocks')
   async processBlocks (fromBlock: number, toBlock: number) {
     if (fromBlock > toBlock) return
 
@@ -76,9 +77,9 @@ export default class TransactionFilterService {
 
   @logPerformance('TransactionFilter::ProcessBlock')
   async processBlock (blockNumber: number) {
-    const block = await this.provider.getBlockWithTransactions(blockNumber)
+    const block = await this.getBlockWithTransactions(blockNumber)
 
-    for (const transactionFilter of this.transactionFilters) {
+    for (const transactionFilter of this.transactionFilters) {            
       const filtered = block.transactions.filter(transactionFilter.filter)
 
       for (const transaction of filtered) {
@@ -104,12 +105,19 @@ export default class TransactionFilterService {
     console.log(`TransactionFilter: Processed block ${block.number}`)
   }
 
+  @logPerformance('TransactionFilter::GetBlockWithTransactions')
+  private async getBlockWithTransactions(blockNumber: number) {
+    return await this.provider.getBlockWithTransactions(blockNumber)
+  }
+
+  @logPerformance('TransactionFilter::ProcessTransaction')
   async processTransaction (transaction: TransactionResponse, filter: ITransactionFilter) {
     if (filter.name === nativeTransferTransactionFilter.name) {
       await this.processNativeTransferEvent(transaction, filter)
     }
   }
 
+  @logPerformance('TransactionFilter::ProcessNativeTransferEvent')
   async processNativeTransferEvent (transaction: TransactionResponse, filter: ITransactionFilter) {
     const isToSubscribed = await this.subscriptionService.isSubscribed(filter.event, transaction.to)
     if (!isToSubscribed) {
