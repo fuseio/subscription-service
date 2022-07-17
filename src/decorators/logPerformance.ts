@@ -9,9 +9,9 @@ const logPerformance = (
 ) => {
   const method = descriptor.value
 
-  descriptor.value = function (...args: any[]) {
+  descriptor.value = async function (...args: any[]) {
     const start = performance.now()
-    const result = method.apply(this, args)
+    const result = await method.apply(this, args)
     const finish = performance.now()
     console.log(`${logPrefix} Execution time: ${finish - start} ms`)
     return result
