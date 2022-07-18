@@ -75,9 +75,4 @@ export default class SubscriptionsController {
       next(e)
     }
   }
-
-  static async webhook (req: Request, res: Response, next: NextFunction) {
-    console.log('Webhook received')
-    console.log(JSON.stringify(req.body))
-  }
 }
