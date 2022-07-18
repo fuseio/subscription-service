@@ -7,6 +7,7 @@
     "start": "nodemon ./src/server.ts",
     "debug": "node --inspect-brk --trace-warnings ./src/app.js",
     "start-prod": "NODE_ENV=production ts-node-transpile-only ./src/server.ts",
+    "start-prod-debug": "NODE_ENV=production ts-node --inspect ./src/server.ts",
     "doc": "apidoc -i src -o docs/api && apidoc-markdown -p docs/api -o docs/api.md",
     "lint": "eslint ./src",
     "lint-fix": "eslint ./src --fix",

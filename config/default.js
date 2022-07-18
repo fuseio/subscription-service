@@ -26,5 +26,5 @@ module.exports = {
       tracesSampleRate: 1.0
     }
   },
-  timeoutInterval: 5000
+  timeoutInterval: 1000
 }

@@ -24,4 +24,9 @@ router.get(
   SubscriptionsController.filterStatus
 )
 
+router.post(
+  '/webhook',
+  SubscriptionsController.webhook
+)
+
 export default router
